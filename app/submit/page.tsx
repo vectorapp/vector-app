@@ -1,6 +1,32 @@
 "use client";
 import { useState } from "react";
 
+const DOMAINS = [
+  {
+    label: "Muscular Strength",
+    value: "muscular-strength",
+  },
+  {
+    label: "Muscular Endurance",
+    value: "muscular-endurance",
+  },
+  {
+    label: "Olympic Lifting",
+    value: "olympic-lifting",
+  },
+  {
+    label: "Anaerobic Power/Speed",
+    value: "anaerobic-power-speed",
+  },
+  {
+    label: "Steady-State Endurance",
+    value: "steady-state-endurance",
+  },
+  {
+    label: "Agility & Coordination",
+    value: "agility-coordination",
+  }
+]
 const UNITS = [
   { 
     label: "Weight", 
@@ -45,33 +71,33 @@ const UNITS = [
 ];
 
 const EVENTS = [
-  // strength
-  { label: "1RM Deadlift", value: "deadlift", unitType: "weight" },
-  { label: "1RM Back Squat", value: "backsquat", unitType: "weight" },
-  { label: "1RM Bench Press", value: "benchpress", unitType: "weight" },
-  { label: "1RM Military Press", value: "militarypress", unitType: "weight" },
+  // domain: musuclar strength
+  { label: "1RM Deadlift", value: "deadlift", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
+  { label: "1RM Back Squat", value: "backsquat", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
+  { label: "1RM Bench Press", value: "benchpress", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
+  { label: "1RM Military Press", value: "militarypress", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
 
-  // muscular endurance
-  { label: "Pull-Ups", value: "pullups", unitType: "reps" },
-  { label: "Push-Ups", value: "pushups", unitType: "reps" },
-  { label: "Air Squats", value: "airsquats", unitType: "reps" },
-  { label: "Sit-Ups", value: "situps", unitType: "reps" },
+  // domain: muscular endurance
+  { label: "Max Pull-Ups / 60 Seconds", value: "pullups", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
+  { label: "Max Push-Ups / 60 Seconds", value: "pushups", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
+  { label: "Max Air Squats / 60 Seconds", value: "airsquats", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
+  { label: "Max Sit-Ups / 60 Seconds", value: "situps", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
 
-  // olympic lifting
-  { label: "Snatch", value: "snatch", unitType: "weight" },
-  { label: "Clean & Jerk", value: "cleanjerk", unitType: "weight" },
+  // domain: olympic lifting
+  { label: "1RM Snatch", value: "snatch", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "olympic-lifting")?.value },
+  { label: "1RM Clean & Jerk", value: "cleanjerk", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "olympic-lifting")?.value },
 
-  // steady-state endurance
-  { label: "5K Run", value: "5krun", unitType: "time" },
-  { label: "1000M Row", value: "1000mrow", unitType: "time" },
+  // domain: steady-state endurance
+  { label: "5K Run", value: "5krun", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "steady-state-endurance")?.value },
+  { label: "1000M Row", value: "1000mrow", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "steady-state-endurance")?.value },
 
-  // anaerobic power/speed
-  { label: "400M Run", value: "400mrun", unitType: "time" },
-  { label: "Assault Bike Max Calories / 60 seconds", value: "assaultbike", unitType: "calories" },
+  // domain: anaerobic power/speed
+  { label: "400M Run", value: "400mrun", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "anaerobic-power-speed")?.value },
+  { label: "Assault Bike Max Calories / 60 seconds", value: "assaultbike", unitType: UNITS.find(u => u.value === "calories")?.value, domain: DOMAINS.find(d => d.value === "anaerobic-power-speed")?.value },
 
-  // agility & coordination
-  { label: "Shuttle Run", value: "shuttlerun", unitType: "time" },
-  { label: "T-Test", value: "t-test", unitType: "time" },
+  // domain: agility & coordination
+  { label: "Shuttle Run", value: "shuttlerun", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "agility-coordination")?.value },
+  { label: "T-Test", value: "t-test", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "agility-coordination")?.value },
 ];
 
 export default function SubmitPage() {
@@ -108,6 +134,8 @@ export default function SubmitPage() {
   const currentUnitType = currentEvent ? UNITS.find(u => u.value === currentEvent.unitType) : null;
   const availableUnits = currentUnitType?.units || [];
 
+  const domains = Array.from(new Set(EVENTS.map(ev => ev.domain)));
+
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow text-black">
       <h1 className="text-2xl font-bold mb-6 text-center">Submit Performance</h1>
@@ -119,8 +147,12 @@ export default function SubmitPage() {
             onChange={handleEventChange}
             className="border rounded px-2 py-1"
           >
-            {EVENTS.map(ev => (
-              <option key={ev.value} value={ev.value}>{ev.label}</option>
+            {domains.map(domain => (
+              <optgroup key={domain} label={DOMAINS.find(d => d.value === domain)?.label}>
+                {EVENTS.filter(ev => ev.domain === domain).map(ev => (
+                  <option key={ev.value} value={ev.value}>{ev.label}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </label>
