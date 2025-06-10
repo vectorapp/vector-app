@@ -7,6 +7,7 @@ const UNITS = [
   { label: "Time", value: "time", units: ["seconds", "minutes"] },
   { label: "Sets", value: "sets", units: ["sets"] },
   { label: "Reps", value: "reps", units: ["reps"] },
+  { label: "Calories", value: "calories", units: ["calories"] },
 ]
 
 const EVENTS = [
@@ -21,14 +22,22 @@ const EVENTS = [
   { label: "Push-Ups", value: "pushups", units: UNITS.filter(u => u.value === "reps") },
   { label: "Air Squats", value: "airsquats", units: UNITS.filter(u => u.value === "reps") },
   { label: "Sit-Ups", value: "situps", units: UNITS.filter(u => u.value === "reps") },
-  { label: "Plank Hold", value: "plank", units: UNITS.filter(u => u.value === "time") },
 
   // olympic lifting
-  // { label: "Snatch", value: "snatch", units: UNITS.filter(u => u.value === "weight") },
+  { label: "Snatch", value: "snatch", units: UNITS.filter(u => u.value === "weight") },
   { label: "Clean & Jerk", value: "cleanjerk", units: UNITS.filter(u => u.value === "weight") },
 
-  // endurance
+  // steady-state endurance
   { label: "5K Run", value: "5krun", units: UNITS.filter(u => u.value === "time") },
+  { label: "1000M Row", value: "1000mrow", units: UNITS.filter(u => u.value === "time") },
+
+  // anaerobic power/speed
+  { label: "400M Run", value: "400mrun", units: UNITS.filter(u => u.value === "time") },
+  { label: "Assault Bike Max Calories / 60 seconds", value: "assaultbike", units: UNITS.filter(u => u.value === "calories") },
+
+  // agility & coordination
+  { label: "Shuttle Run", value: "shuttlerun", units: UNITS.filter(u => u.value === "time") },
+  { label: "T-Test", value: "t-test", units: UNITS.filter(u => u.value === "time") },
 ];
 
 export default function SubmitPage() {
