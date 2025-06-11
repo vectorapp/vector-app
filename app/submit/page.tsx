@@ -111,8 +111,10 @@ function timeStringToSeconds(time: string): number {
 
 export default function SubmitPage() {
   const [event, setEvent] = useState(EVENTS[0].value);
-  const [value, setValue] = useState("");
+  const [eventValue, setEventValue] = useState("");
   const [unit, setUnit] = useState("");
+  const [timedEventValue, setTimedEventValue] = useState<Date | null>(null);
+
 
   const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedEvent = EVENTS.find(ev => ev.value === e.target.value);
@@ -123,15 +125,15 @@ export default function SubmitPage() {
       if (unitType) {
         setUnit(unitType.units[0].value);
       }
-      setValue("");
+      setEventValue("");
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let normalizedValue = value;
+    let normalizedValue = eventValue;
     if (currentUnitType?.value === "time") {
-      normalizedValue = timeStringToSeconds(value).toString();
+      normalizedValue = timeStringToSeconds(eventValue).toString();
     }
     const submission = {
       user: "nick@vector.dev",
@@ -148,6 +150,7 @@ export default function SubmitPage() {
   const availableUnits = currentUnitType?.units || [];
 
   const domains = Array.from(new Set(EVENTS.map(ev => ev.domain)));
+  
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow text-black">
@@ -173,8 +176,8 @@ export default function SubmitPage() {
           Value
           {currentUnitType?.value === "time" ? (
             <TimePicker
-              onChange={setValue}
-              value={value}
+              onChange={setTimedEventValue}
+              value={timedEventValue}
               format="HH:mm:ss"
               disableClock
               clearIcon={null}
@@ -184,8 +187,8 @@ export default function SubmitPage() {
           ) : (
             <input
               type="number"
-              value={value}
-              onChange={e => setValue(e.target.value)}
+              value={eventValue}
+              onChange={e => setEventValue(e.target.value)}
               className="border rounded px-2 py-1"
               required
             />
