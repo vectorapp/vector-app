@@ -113,8 +113,7 @@ export default function SubmitPage() {
   const [event, setEvent] = useState(EVENTS[0].value);
   const [eventValue, setEventValue] = useState("");
   const [unit, setUnit] = useState("");
-  const [timedEventValue, setTimedEventValue] = useState<Date | null>(null);
-
+  const [timedEventValue, setTimedEventValue] = useState<string | null>(null);
 
   const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedEvent = EVENTS.find(ev => ev.value === e.target.value);
