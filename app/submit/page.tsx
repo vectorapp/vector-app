@@ -1,5 +1,8 @@
 "use client";
 import { useState } from "react";
+import TimePicker from 'react-time-picker';
+import 'react-time-picker/dist/TimePicker.css';
+import 'react-clock/dist/Clock.css';
 
 const DOMAINS = [
   {
@@ -100,6 +103,12 @@ const EVENTS = [
   { label: "T-Test", value: "t-test", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "agility-coordination")?.value },
 ];
 
+// Helper to convert HH:MM:SS to seconds
+function timeStringToSeconds(time: string): number {
+  const [h = '0', m = '0', s = '0'] = time.split(":");
+  return parseInt(h) * 3600 + parseInt(m) * 60 + parseInt(s);
+}
+
 export default function SubmitPage() {
   const [event, setEvent] = useState(EVENTS[0].value);
   const [value, setValue] = useState("");
@@ -120,10 +129,14 @@ export default function SubmitPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    let normalizedValue = value;
+    if (currentUnitType?.value === "time") {
+      normalizedValue = timeStringToSeconds(value).toString();
+    }
     const submission = {
       user: "nick@vector.dev",
       event,
-      value,
+      value: normalizedValue,
       unit,
     };
     console.log("Submission:", submission);
@@ -158,26 +171,41 @@ export default function SubmitPage() {
         </label>
         <label className="flex flex-col gap-1">
           Value
-          <input
-            type="number"
-            value={value}
-            onChange={e => setValue(e.target.value)}
-            className="border rounded px-2 py-1"
-            required
-          />
+          {currentUnitType?.value === "time" ? (
+            <TimePicker
+              onChange={setValue}
+              value={value}
+              format="HH:mm:ss"
+              disableClock
+              clearIcon={null}
+              className="border rounded px-2 py-1"
+              required
+            />
+          ) : (
+            <input
+              type="number"
+              value={value}
+              onChange={e => setValue(e.target.value)}
+              className="border rounded px-2 py-1"
+              required
+            />
+          )}
         </label>
-        <label className="flex flex-col gap-1">
-          Unit
-          <select
-            value={unit}
-            onChange={e => setUnit(e.target.value)}
-            className="border rounded px-2 py-1"
-          >
-            {availableUnits.map(u => (
-              <option key={u.value} value={u.value}>{u.label}</option>
-            ))}
-          </select>
-        </label>
+        {/* Only show Unit field if not a time-based event */}
+        {currentUnitType?.value !== "time" && (
+          <label className="flex flex-col gap-1">
+            Unit
+            <select
+              value={unit}
+              onChange={e => setUnit(e.target.value)}
+              className="border rounded px-2 py-1"
+            >
+              {availableUnits.map(u => (
+                <option key={u.value} value={u.value}>{u.label}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <button
           type="submit"
           className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition"
