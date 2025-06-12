@@ -5,105 +5,7 @@ import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
-const DOMAINS = [
-  {
-    label: "Muscular Strength",
-    value: "muscular-strength",
-  },
-  {
-    label: "Muscular Endurance",
-    value: "muscular-endurance",
-  },
-  {
-    label: "Olympic Lifting",
-    value: "olympic-lifting",
-  },
-  {
-    label: "Anaerobic Power/Speed",
-    value: "anaerobic-power-speed",
-  },
-  {
-    label: "Steady-State Endurance",
-    value: "steady-state-endurance",
-  },
-  {
-    label: "Agility & Coordination",
-    value: "agility-coordination",
-  }
-]
-const UNITS = [
-  { 
-    label: "Weight", 
-    value: "weight", 
-    units: [
-      { label: "Kilograms", value: "kg" },
-      { label: "Pounds", value: "lbs" }
-    ]
-  },
-  { 
-    label: "Distance", 
-    value: "distance", 
-    units: [
-      { label: "Feet", value: "ft" },
-      { label: "Inches", value: "in" },
-      { label: "Meters", value: "m" },
-      { label: "Centimeters", value: "cm" }
-    ]
-  },
-  { 
-    label: "Time", 
-    value: "time", 
-    units: [
-      { label: "Seconds", value: "sec" },
-      { label: "Minutes", value: "min" }
-    ]
-  },
-  { 
-    label: "Repetitions", 
-    value: "reps", 
-    units: [
-      { label: "Reps", value: "reps" }
-    ]
-  },
-  { 
-    label: "Calories", 
-    value: "calories", 
-    units: [
-      { label: "Calories", value: "cal" }
-    ]
-  }
-];
-
-const EVENTS = [
-  // domain: musuclar strength
-  { label: "1RM Deadlift", value: "deadlift", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
-  { label: "1RM Back Squat", value: "backsquat", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
-  { label: "1RM Bench Press", value: "benchpress", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
-  { label: "1RM Military Press", value: "militarypress", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "muscular-strength")?.value },
-
-  // domain: muscular endurance
-  { label: "Max Pull-Ups / 60 Seconds", value: "pullups", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
-  { label: "Max Push-Ups / 60 Seconds", value: "pushups", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
-  { label: "Max Air Squats / 60 Seconds", value: "airsquats", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
-  { label: "Max Sit-Ups / 60 Seconds", value: "situps", unitType: UNITS.find(u => u.value === "reps")?.value, domain: DOMAINS.find(d => d.value === "muscular-endurance")?.value },
-
-  // domain: olympic lifting
-  { label: "1RM Snatch", value: "snatch", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "olympic-lifting")?.value },
-  { label: "1RM Clean & Jerk", value: "cleanjerk", unitType: UNITS.find(u => u.value === "weight")?.value, domain: DOMAINS.find(d => d.value === "olympic-lifting")?.value },
-
-  // domain: steady-state endurance
-  { label: "5K Run", value: "5krun", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "steady-state-endurance")?.value },
-  { label: "1000M Row", value: "1000mrow", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "steady-state-endurance")?.value },
-
-  // domain: anaerobic power/speed
-  { label: "400M Run", value: "400mrun", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "anaerobic-power-speed")?.value },
-  { label: "Assault Bike Max Calories / 60 seconds", value: "assaultbike", unitType: UNITS.find(u => u.value === "calories")?.value, domain: DOMAINS.find(d => d.value === "anaerobic-power-speed")?.value },
-
-  // domain: agility & coordination
-  { label: "Shuttle Run", value: "shuttlerun", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "agility-coordination")?.value },
-  { label: "T-Test", value: "t-test", unitType: UNITS.find(u => u.value === "time")?.value, domain: DOMAINS.find(d => d.value === "agility-coordination")?.value },
-];
+import { DOMAINS, UNITS, EVENTS } from '../constants/fitness';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
@@ -141,7 +43,7 @@ export default function SubmitPage() {
     const submission = {
       userId: "nlayton",
       event,
-      value: normalizedValue,
+      normalizedValue: normalizedValue,
       unit: currentUnitType?.value === "time" ? undefined : unit,
       timestamp: serverTimestamp(),
       rawValue: rawValue,
