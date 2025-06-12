@@ -3,6 +3,8 @@ import { useState } from "react";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const DOMAINS = [
   {
@@ -128,20 +130,30 @@ export default function SubmitPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let normalizedValue = eventValue;
+    let rawValue = eventValue;
     if (currentUnitType?.value === "time") {
       normalizedValue = timeStringToSeconds(eventValue).toString();
+      rawValue = eventValue;
     }
     const submission = {
-      user: "nick@vector.dev",
+      userId: "nlayton",
       event,
       value: normalizedValue,
-      unit,
+      unit: currentUnitType?.value === "time" ? undefined : unit,
+      timestamp: serverTimestamp(),
+      rawValue: rawValue,
     };
-    console.log("Submission:", submission);
-    // Future: send to API
+    try {
+      await addDoc(collection(db, 'submissions'), submission);
+      alert('Submission saved!');
+      setEventValue("");
+      if (currentUnitType?.value === "time") setTimedEventValue(null);
+    } catch (error) {
+      alert('Error saving submission: ' + error);
+    }
   };
 
   const currentEvent = EVENTS.find(ev => ev.value === event);
