@@ -11,9 +11,11 @@ import {
   orderBy,
   setDoc,
   serverTimestamp,
+  getDoc,
 } from 'firebase/firestore';
+import type { User } from '../lib/normalization/types';
 
-const userId = 'nlayton'; // Hardcoded admin
+const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
 
 type FirestoreItem = { id: string; [key: string]: any };
 
@@ -284,15 +286,30 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
 }
 
 export default function AdminPage() {
-  if (userId !== 'nlayton') {
-    return <div className="text-center mt-20 text-xl">Access denied.</div>;
-  }
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  // Always call hooks at the top level
   const domains = useFirestoreCollection('domains');
   const unitTypes = useFirestoreCollection('unitTypes');
   const units = useFirestoreCollection('units');
   const events = useFirestoreCollection('events');
-  const users = useFirestoreCollection('users', true);
+  const users = useFirestoreCollection('users');
+
+  useEffect(() => {
+    async function fetchUser() {
+      const userDoc = await getDoc(doc(db, 'users', ADMIN_USER_ID));
+      if (userDoc.exists()) {
+        setCurrentUser({ id: userDoc.id, ...userDoc.data() } as User);
+      } else {
+        setCurrentUser(null);
+      }
+    }
+    fetchUser();
+  }, []);
+
+  if (currentUser === null) {
+    return <div className="text-center mt-20 text-xl">Access denied.</div>;
+  }
 
   // Prepare options for dependency fields
   const domainOptions = domains.items.map(d => ({ value: d.value, label: d.label }));
