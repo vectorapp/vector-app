@@ -8,8 +8,7 @@ export function computeCoreScore(
   // Normalize all submissions
   const normalized = submissions.map(sub => {
     const stats = populationStats.find(
-      s => s.event === sub.event && s.gender === sub.gender && s.ageGroup === getAgeGroup(sub.age)
-    );
+      s => s.event === sub.event      );
     if (!stats) throw new Error(`No stats for event ${sub.event}`);
     return normalizeSubmission(sub, stats);
   });

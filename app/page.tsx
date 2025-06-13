@@ -33,8 +33,6 @@ export default function Home() {
           event: data.event,
           value: Number(data.normalizedValue ?? data.value),
           userId: data.userId,
-          gender: data.gender ?? 'male', // default for demo
-          age: data.age ?? 30,           // default for demo
           domain: data.domain ?? (EVENTS.find(e => e.value === data.event)?.domain ?? ''),
           timestamp: data.timestamp ?? null,
         });

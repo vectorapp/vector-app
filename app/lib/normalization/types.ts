@@ -1,9 +1,10 @@
 export type User = {
   id: string; // Unique user identifier (e.g., email or UUID)
-  name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   gender?: string;
-  age?: number;
+  birthday?: string; // ISO date string (YYYY-MM-DD)
   createdAt?: any; // Firestore Timestamp or Date
   // Add more fields as needed (e.g., profile image, role, etc.)
 };

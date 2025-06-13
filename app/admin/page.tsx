@@ -10,6 +10,7 @@ import {
   query,
   orderBy,
   setDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 
 const userId = 'nlayton'; // Hardcoded admin
@@ -18,33 +19,60 @@ type FirestoreItem = { id: string; [key: string]: any };
 
 type PromptField = { key: string; label: string; options?: { value: string; label: string }[]; multiple?: boolean };
 
-function useFirestoreCollection(collectionName: string) {
+function useFirestoreCollection(collectionName: string, includeTimestamp: boolean = false) {
   const [items, setItems] = useState<FirestoreItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function fetchItems() {
     setLoading(true);
-    const q = query(collection(db, collectionName), orderBy('label', 'asc'));
-    const snapshot = await getDocs(q);
-    setItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    let q;
+    if (collectionName === 'users') {
+      q = query(collection(db, collectionName)); // No orderBy for users
+    } else {
+      q = query(collection(db, collectionName), orderBy('label', 'asc'));
+    }
+    try {
+      const snapshot = await getDocs(q);
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log(`[Firestore] Fetched from ${collectionName}:`, docs);
+      setItems(docs);
+    } catch (err) {
+      console.error(`[Firestore] Error fetching from ${collectionName}:`, err);
+      setItems([]);
+    }
     setLoading(false);
   }
 
   useEffect(() => { fetchItems(); }, []);
 
   async function addItem(data: Record<string, any>) {
-    await addDoc(collection(db, collectionName), data);
-    fetchItems();
+    try {
+      const result = await addDoc(collection(db, collectionName), data);
+      console.log(`[Firestore] Added to ${collectionName}:`, data, 'Result:', result);
+      fetchItems();
+    } catch (err) {
+      console.error(`[Firestore] Error adding to ${collectionName}:`, err);
+    }
   }
 
   async function removeItem(id: string) {
-    await deleteDoc(doc(db, collectionName, id));
-    fetchItems();
+    try {
+      await deleteDoc(doc(db, collectionName, id));
+      console.log(`[Firestore] Deleted from ${collectionName}:`, id);
+      fetchItems();
+    } catch (err) {
+      console.error(`[Firestore] Error deleting from ${collectionName}:`, err);
+    }
   }
 
   async function editItem(id: string, data: Record<string, any>) {
-    await setDoc(doc(db, collectionName, id), data, { merge: true });
-    fetchItems();
+    try {
+      await setDoc(doc(db, collectionName, id), data, { merge: true });
+      console.log(`[Firestore] Edited in ${collectionName}:`, id, data);
+      fetchItems();
+    } catch (err) {
+      console.error(`[Firestore] Error editing in ${collectionName}:`, err);
+    }
   }
 
   return { items, loading, addItem, removeItem, editItem };
@@ -111,7 +139,7 @@ function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode =
             ) : (
               <input
                 key={field.key}
-                type="text"
+                type={field.key === 'birthday' ? 'date' : 'text'}
                 placeholder={field.label}
                 value={form[field.key] || ''}
                 onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
@@ -264,6 +292,7 @@ export default function AdminPage() {
   const unitTypes = useFirestoreCollection('unitTypes');
   const units = useFirestoreCollection('units');
   const events = useFirestoreCollection('events');
+  const users = useFirestoreCollection('users', true);
 
   // Prepare options for dependency fields
   const domainOptions = domains.items.map(d => ({ value: d.value, label: d.label }));
@@ -317,6 +346,28 @@ export default function AdminPage() {
           { key: 'unitType', label: 'Unit Type', options: unitTypeOptions },
           { key: 'domain', label: 'Domain', options: domainOptions },
           { key: 'description', label: 'Description' },
+        ]}
+      />
+      <AdminTable
+        title="Users"
+        items={users.items}
+        loading={users.loading}
+        onAdd={async (data) => {
+          await users.addItem({ ...data, createdAt: serverTimestamp() });
+        }}
+        onDelete={users.removeItem}
+        onEdit={users.editItem}
+        promptFields={[
+          { key: 'firstName', label: 'First Name' },
+          { key: 'lastName', label: 'Last Name' },
+          { key: 'email', label: 'Email' },
+          { key: 'gender', label: 'Gender', options: [
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+            { value: 'nonbinary', label: 'Nonbinary' },
+            { value: 'prefer-not-to-say', label: 'Prefer Not To Say' },
+          ] },
+          { key: 'birthday', label: 'Birthday' },
         ]}
       />
     </div>
