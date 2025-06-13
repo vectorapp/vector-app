@@ -31,7 +31,7 @@ export default function Home() {
         const data = doc.data();
         submissions.push({
           event: data.event,
-          value: Number(data.value),
+          value: Number(data.normalizedValue ?? data.value),
           userId: data.userId,
           gender: data.gender ?? 'male', // default for demo
           age: data.age ?? 30,           // default for demo

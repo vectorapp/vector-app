@@ -1,6 +1,6 @@
 export type User = {
   id: string; // Unique user identifier (e.g., email or UUID)
-  name?: string;
+  name: string;
   email: string;
   gender?: string;
   age?: number;
@@ -29,6 +29,7 @@ export type Event = {
   value: string;
   unitType: string;
   domain: string;
+  description?: string;
 };
 
 export type Submission = {
