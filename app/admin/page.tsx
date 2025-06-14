@@ -30,6 +30,8 @@ function useFirestoreCollection(collectionName: string, includeTimestamp: boolea
     let q;
     if (collectionName === 'users') {
       q = query(collection(db, collectionName)); // No orderBy for users
+    } else if (collectionName === 'ageGroups') {
+      q = query(collection(db, collectionName), orderBy('lowerBound', 'asc'));
     } else {
       q = query(collection(db, collectionName), orderBy('label', 'asc'));
     }
@@ -141,7 +143,8 @@ function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode =
             ) : (
               <input
                 key={field.key}
-                type={field.key === 'birthday' ? 'date' : 'text'}
+                type={field.key === 'birthday' ? 'date' :
+                  (field.key === 'lowerBound' || field.key === 'upperBound' ? 'number' : 'text')}
                 placeholder={field.label}
                 value={form[field.key] || ''}
                 onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
@@ -217,6 +220,10 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
         open={modalOpen || !!editItem}
         onClose={() => { setModalOpen(false); setEditItem(null); }}
         onSubmit={async (data) => {
+          if (title === 'Age Groups') {
+            data.lowerBound = Number(data.lowerBound);
+            data.upperBound = Number(data.upperBound);
+          }
           if (editItem) {
             await onEdit(editItem.id, data);
             setEditItem(null);
@@ -294,6 +301,8 @@ export default function AdminPage() {
   const units = useFirestoreCollection('units');
   const events = useFirestoreCollection('events');
   const users = useFirestoreCollection('users');
+  const genders = useFirestoreCollection('genders');
+  const ageGroups = useFirestoreCollection('ageGroups');
 
   useEffect(() => {
     async function fetchUser() {
@@ -378,13 +387,40 @@ export default function AdminPage() {
           { key: 'firstName', label: 'First Name' },
           { key: 'lastName', label: 'Last Name' },
           { key: 'email', label: 'Email' },
-          { key: 'gender', label: 'Gender', options: [
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
-            { value: 'nonbinary', label: 'Nonbinary' },
-            { value: 'prefer-not-to-say', label: 'Prefer Not To Say' },
-          ] },
+          { key: 'gender', label: 'Gender', options: genders.items.map(g => ({ value: g.value, label: g.label })) },
           { key: 'birthday', label: 'Birthday' },
+        ]}
+      />
+      <AdminTable
+        title="Genders"
+        items={genders.items}
+        loading={genders.loading}
+        onAdd={genders.addItem}
+        onDelete={genders.removeItem}
+        onEdit={genders.editItem}
+        promptFields={[
+          { key: 'label', label: 'Label' },
+          { key: 'value', label: 'Value' },
+        ]}
+      />
+      <AdminTable
+        title="Age Groups"
+        items={ageGroups.items}
+        loading={ageGroups.loading}
+        onAdd={async (data) => {
+          data.lowerBound = Number(data.lowerBound);
+          data.upperBound = Number(data.upperBound);
+          await ageGroups.addItem(data);
+        }}
+        onDelete={ageGroups.removeItem}
+        onEdit={async (id, data) => {
+          data.lowerBound = Number(data.lowerBound);
+          data.upperBound = Number(data.upperBound);
+          await ageGroups.editItem(id, data);
+        }}
+        promptFields={[
+          { key: 'lowerBound', label: 'Lower Bound' },
+          { key: 'upperBound', label: 'Upper Bound' },
         ]}
       />
     </div>

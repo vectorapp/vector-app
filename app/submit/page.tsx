@@ -5,7 +5,6 @@ import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { DOMAINS, UNITS, EVENTS } from '../constants/fitness';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
