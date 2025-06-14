@@ -4,7 +4,7 @@ import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { useFirestoreCollection } from '../lib/useFirestoreCollection';
 
 // Helper to convert HH:MM:SS to seconds
@@ -12,6 +12,8 @@ function timeStringToSeconds(time: string): number {
   const [h = '0', m = '0', s = '0'] = time.split(":");
   return parseInt(h) * 3600 + parseInt(m) * 60 + parseInt(s);
 }
+
+const CURRENT_USER_ID = 'o5NeITfIMwSQhhyV28HQ';
 
 export default function SubmitPage() {
   const { items: events, loading: eventsLoading } = useFirestoreCollection('events', 'label');
@@ -23,6 +25,23 @@ export default function SubmitPage() {
   const [eventValue, setEventValue] = useState("");
   const [unit, setUnit] = useState("");
   const [timedEventValue, setTimedEventValue] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Fetch current user
+  useEffect(() => {
+    async function fetchUser() {
+      setUserLoading(true);
+      const userDoc = await getDoc(doc(db, 'users', CURRENT_USER_ID));
+      if (userDoc.exists()) {
+        setCurrentUser({ id: userDoc.id, ...userDoc.data() });
+      } else {
+        setCurrentUser(null);
+      }
+      setUserLoading(false);
+    }
+    fetchUser();
+  }, []);
 
   // Set default event when events are loaded
   useEffect(() => {
@@ -46,6 +65,7 @@ export default function SubmitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) return;
     const currentEvent = events.find(ev => ev.value === event);
     const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
     let normalizedValue = eventValue;
@@ -55,7 +75,7 @@ export default function SubmitPage() {
       rawValue = eventValue;
     }
     const submission = {
-      userId: "nlayton",
+      userId: currentUser.id,
       event,
       normalizedValue: normalizedValue,
       unit: currentUnitType?.value === "time" ? undefined : unit,
@@ -79,6 +99,7 @@ export default function SubmitPage() {
     : [];
 
   // Debug logging
+  console.log('currentUser:', currentUser);
   console.log('currentEvent:', currentEvent);
   console.log('currentUnitType:', currentUnitType);
   console.log('availableUnits:', availableUnits);
@@ -90,7 +111,7 @@ export default function SubmitPage() {
     events: events.filter(ev => ev.domain === domain.value)
   }));
 
-  if (eventsLoading || unitsLoading || unitTypesLoading || domainsLoading) {
+  if (eventsLoading || unitsLoading || unitTypesLoading || domainsLoading || userLoading) {
     return <div className="text-center mt-10">Loading...</div>;
   }
 
@@ -104,6 +125,7 @@ export default function SubmitPage() {
             value={event}
             onChange={handleEventChange}
             className="border rounded px-2 py-1"
+            disabled={!currentUser}
           >
             {eventsByDomain.map(group => (
               <optgroup key={group.domain} label={group.label}>
@@ -125,6 +147,7 @@ export default function SubmitPage() {
               clearIcon={null}
               className="border rounded px-2 py-1"
               required
+              disabled={!currentUser}
             />
           ) : (
             <input
@@ -133,6 +156,7 @@ export default function SubmitPage() {
               onChange={e => setEventValue(e.target.value)}
               className="border rounded px-2 py-1"
               required
+              disabled={!currentUser}
             />
           )}
         </label>
@@ -144,6 +168,7 @@ export default function SubmitPage() {
               value={unit}
               onChange={e => setUnit(e.target.value)}
               className="border rounded px-2 py-1"
+              disabled={!currentUser}
             >
               {availableUnits.map(u => (
                 <option key={u.value} value={u.value}>{u.label}</option>
@@ -154,6 +179,7 @@ export default function SubmitPage() {
         <button
           type="submit"
           className="bg-blue-600 text-white rounded px-4 py-2 font-semibold hover:bg-blue-700 transition"
+          disabled={!currentUser}
         >
           Submit
         </button>

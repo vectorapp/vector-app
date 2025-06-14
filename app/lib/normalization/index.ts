@@ -30,9 +30,3 @@ export function computeCoreScore(
 
   return { value: coreValue, domains: domainScores };
 }
-
-// Helper to bucket age into groups (e.g., 20-29, 30-39, etc.)
-function getAgeGroup(age: number): string {
-  const lower = Math.floor(age / 10) * 10;
-  return `${lower}-${lower + 9}`;
-} 
