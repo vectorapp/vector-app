@@ -20,9 +20,12 @@ export function useFirestoreCollection<T = any>(
       }
       try {
         const snapshot = await getDocs(q);
-        setItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T));
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T);
+        setItems(docs);
+        console.log(`[useFirestoreCollection] Fetched from ${collectionName} (order by ${orderField || 'none'}):`, docs);
       } catch (err) {
         setItems([]);
+        console.error(`[useFirestoreCollection] Error fetching from ${collectionName}:`, err);
       }
       setLoading(false);
     }

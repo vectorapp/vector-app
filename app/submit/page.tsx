@@ -74,13 +74,16 @@ export default function SubmitPage() {
 
   const currentEvent = events.find(ev => ev.value === event);
   const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
-  const availableUnits = currentUnitType?.units || [];
+  const availableUnits = currentUnitType
+    ? units.filter(u => (currentUnitType.units || []).includes(u.value))
+    : [];
+
+  // Debug logging
+  console.log('currentEvent:', currentEvent);
+  console.log('currentUnitType:', currentUnitType);
+  console.log('availableUnits:', availableUnits);
 
   // Group events by domain for optgroup
-  const domainMap = domains.reduce((acc, d) => {
-    acc[d.value] = d.label;
-    return acc;
-  }, {} as Record<string, string>);
   const eventsByDomain = domains.map(domain => ({
     domain: domain.value,
     label: domain.label,
