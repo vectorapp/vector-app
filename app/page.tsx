@@ -4,7 +4,7 @@ import { db } from './firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { computeCoreScore } from './lib/normalization';
 import { Submission, PopulationStats } from './lib/normalization/types';
-import { EVENTS, UNITS } from './constants/fitness';
+import { useFirestoreCollection } from './lib/useFirestoreCollection';
 
 export default function Home() {
   // Get today's date in YYYY-MM-DD format
@@ -14,14 +14,18 @@ export default function Home() {
   const [domainScores, setDomainScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { items: events, loading: eventsLoading } = useFirestoreCollection('events', 'label');
+  const { items: units, loading: unitsLoading } = useFirestoreCollection('units', 'label');
+
   // Helper to get the first unit label for an event's unitType
   function getUnitLabel(unitType: string | undefined) {
-    const unitObj = UNITS.find(u => u.value === unitType);
-    return unitObj && unitObj.units.length > 0 ? unitObj.units[0].label : '';
+    const unitObj = units.find(u => u.value === unitType);
+    return unitObj && unitObj.units && unitObj.units.length > 0 ? unitObj.units[0].label : '';
   }
 
   useEffect(() => {
     async function fetchData() {
+      if (eventsLoading) return;
       // 1. Fetch user submissions
       const userId = "nlayton"; // or your hardcoded user
       const q = query(collection(db, 'submissions'), where('userId', '==', userId));
@@ -33,13 +37,13 @@ export default function Home() {
           event: data.event,
           value: Number(data.normalizedValue ?? data.value),
           userId: data.userId,
-          domain: data.domain ?? (EVENTS.find(e => e.value === data.event)?.domain ?? ''),
+          domain: data.domain ?? (events.find(e => e.value === data.event)?.domain ?? ''),
           timestamp: data.timestamp ?? null,
         });
       });
 
       // 2. Hardcode population stats for demo
-      const populationStats: PopulationStats[] = EVENTS.map(event => ({
+      const populationStats: PopulationStats[] = events.map(event => ({
         event: event.value,
         gender: 'male',
         ageGroup: '30-39',
@@ -59,7 +63,7 @@ export default function Home() {
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [events, eventsLoading]);
 
   function formatDate(ts: any) {
     if (!ts) return '';
@@ -111,14 +115,14 @@ export default function Home() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading || eventsLoading || unitsLoading ? (
                 <tr><td colSpan={3}>Loading...</td></tr>
               ) : (
                 topEvents.map((event: any) => (
                   <tr key={event.event}>
-                    <td className="px-4 py-2 border-b">{EVENTS.find(e => e.value === event.event)?.label ?? event.event}</td>
+                    <td className="px-4 py-2 border-b">{events.find(e => e.value === event.event)?.label ?? event.event}</td>
                     <td className="px-4 py-2 border-b">{event.normalized}</td>
-                    <td className="px-4 py-2 border-b">{getUnitLabel(EVENTS.find(e => e.value === event.event)?.unitType)}</td>
+                    <td className="px-4 py-2 border-b">{getUnitLabel(events.find(e => e.value === event.event)?.unitType)}</td>
                     <td className="px-4 py-2 border-b">{formatDate(event.timestamp)}</td>
                   </tr>
                 ))

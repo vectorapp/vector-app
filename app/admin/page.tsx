@@ -21,7 +21,7 @@ type FirestoreItem = { id: string; [key: string]: any };
 
 type PromptField = { key: string; label: string; options?: { value: string; label: string }[]; multiple?: boolean };
 
-function useFirestoreCollection(collectionName: string, includeTimestamp: boolean = false) {
+function useFirestoreCollection(collectionName: string) {
   const [items, setItems] = useState<FirestoreItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -361,16 +361,16 @@ export default function AdminPage() {
       />
       <AdminTable
         title="Events"
-        items={events.items}
+        items={events.items.slice().sort((a, b) => (a.domain || '').localeCompare(b.domain || ''))}
         loading={events.loading}
         onAdd={events.addItem}
         onDelete={events.removeItem}
         onEdit={events.editItem}
         promptFields={[
+          { key: 'domain', label: 'Domain', options: domainOptions },
           { key: 'label', label: 'Label' },
           { key: 'value', label: 'Value' },
-          { key: 'unitType', label: 'Unit Type', options: unitTypeOptions },
-          { key: 'domain', label: 'Domain', options: domainOptions },
+          { key: 'unitType', label: 'Unit', options: unitTypeOptions },
           { key: 'description', label: 'Description' },
         ]}
       />

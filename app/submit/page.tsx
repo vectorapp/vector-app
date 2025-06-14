@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirestoreCollection } from '../lib/useFirestoreCollection';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
@@ -13,18 +14,30 @@ function timeStringToSeconds(time: string): number {
 }
 
 export default function SubmitPage() {
-  const [event, setEvent] = useState(EVENTS[0].value);
+  const { items: events, loading: eventsLoading } = useFirestoreCollection('events', 'label');
+  const { items: units, loading: unitsLoading } = useFirestoreCollection('units', 'label');
+  const { items: unitTypes, loading: unitTypesLoading } = useFirestoreCollection('unitTypes', 'label');
+  const { items: domains, loading: domainsLoading } = useFirestoreCollection('domains', 'label');
+
+  const [event, setEvent] = useState<string>('');
   const [eventValue, setEventValue] = useState("");
   const [unit, setUnit] = useState("");
   const [timedEventValue, setTimedEventValue] = useState<string | null>(null);
 
+  // Set default event when events are loaded
+  useEffect(() => {
+    if (!eventsLoading && events.length > 0 && !event) {
+      setEvent(events[0].value);
+    }
+  }, [eventsLoading, events, event]);
+
   const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedEvent = EVENTS.find(ev => ev.value === e.target.value);
+    const selectedEvent = events.find(ev => ev.value === e.target.value);
     if (selectedEvent) {
       setEvent(e.target.value);
       // Find the unit type and set the first available unit
-      const unitType = UNITS.find(u => u.value === selectedEvent.unitType);
-      if (unitType) {
+      const unitType = unitTypes.find(u => u.value === selectedEvent.unitType);
+      if (unitType && unitType.units && unitType.units.length > 0) {
         setUnit(unitType.units[0].value);
       }
       setEventValue("");
@@ -33,6 +46,8 @@ export default function SubmitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const currentEvent = events.find(ev => ev.value === event);
+    const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
     let normalizedValue = eventValue;
     let rawValue = eventValue;
     if (currentUnitType?.value === "time") {
@@ -57,12 +72,24 @@ export default function SubmitPage() {
     }
   };
 
-  const currentEvent = EVENTS.find(ev => ev.value === event);
-  const currentUnitType = currentEvent ? UNITS.find(u => u.value === currentEvent.unitType) : null;
+  const currentEvent = events.find(ev => ev.value === event);
+  const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
   const availableUnits = currentUnitType?.units || [];
 
-  const domains = Array.from(new Set(EVENTS.map(ev => ev.domain)));
-  
+  // Group events by domain for optgroup
+  const domainMap = domains.reduce((acc, d) => {
+    acc[d.value] = d.label;
+    return acc;
+  }, {} as Record<string, string>);
+  const eventsByDomain = domains.map(domain => ({
+    domain: domain.value,
+    label: domain.label,
+    events: events.filter(ev => ev.domain === domain.value)
+  }));
+
+  if (eventsLoading || unitsLoading || unitTypesLoading || domainsLoading) {
+    return <div className="text-center mt-10">Loading...</div>;
+  }
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow text-black">
@@ -75,9 +102,9 @@ export default function SubmitPage() {
             onChange={handleEventChange}
             className="border rounded px-2 py-1"
           >
-            {domains.map(domain => (
-              <optgroup key={domain} label={DOMAINS.find(d => d.value === domain)?.label}>
-                {EVENTS.filter(ev => ev.domain === domain).map(ev => (
+            {eventsByDomain.map(group => (
+              <optgroup key={group.domain} label={group.label}>
+                {group.events.map(ev => (
                   <option key={ev.value} value={ev.value}>{ev.label}</option>
                 ))}
               </optgroup>
