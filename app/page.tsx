@@ -1,67 +1,85 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { db } from './firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useFirestoreCollection } from './lib/useFirestoreCollection';
-import { Submission } from './lib/normalization/types';
+import { db } from './firebase';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
-  const [topSubmissions, setTopSubmissions] = useState<any[]>([]);
+  const [latestSubmissions, setLatestSubmissions] = useState<any[]>([]);
 
   const { items: events, loading: eventsLoading } = useFirestoreCollection('events', 'label');
   const { items: units, loading: unitsLoading } = useFirestoreCollection('units', 'label');
   const { items: domains, loading: domainsLoading } = useFirestoreCollection('domains', 'label');
+  console.log('Events:', events);
+  console.log('Units:', units);
+  console.log('Domains:', domains);
 
   function getUnitLabel(unitType: string | undefined) {
-    const unitObj = units.find(u => u.value === unitType);
+    const unitObj = units.find((u: any) => u.value === unitType);
     return unitObj && unitObj.units && unitObj.units.length > 0 ? unitObj.units[0].label : '';
+  }
+
+  function getEventLabel(eventId: string) {
+    const event = events.find((e: any) => e.value === eventId);
+    return event ? event.label : eventId;
+  }
+
+  function getDomainLabel(domainId: string) {
+    const domain = domains.find((d: any) => d.value === domainId);
+    return domain ? domain.label : domainId;
   }
 
   useEffect(() => {
     async function fetchData() {
       if (eventsLoading || domainsLoading) return;
       const userId = "o5NeITfIMwSQhhyV28HQ";
-      const q = query(collection(db, 'submissions'), where('userId', '==', userId));
+      
+      // Query submissions ordered by timestamp (latest first) and limit to 20
+      const q = query(
+        collection(db, 'submissions'), 
+        where('userId', '==', userId),
+        orderBy('timestamp', 'desc'),
+        limit(20)
+      );
+      
       const querySnapshot = await getDocs(q);
-      const submissions: Submission[] = [];
+      const submissions: any[] = [];
+      
       querySnapshot.forEach(doc => {
         const data = doc.data();
+        console.log('Submission data:', data);
         submissions.push({
+          id: doc.id,
           event: data.event,
           value: Number(data.value),
+          rawValue: data.rawValue,
           userId: data.userId,
-          domain: data.domain ?? (events.find(e => e.value === data.event)?.domain ?? ''),
           unit: data.unit,
           timestamp: data.timestamp ?? null,
+          createdAt: data.createdAt ?? null,
         });
       });
-      // For each domain and event, find the top (max value) submission
-      const topByDomainEvent: Record<string, Record<string, Submission>> = {};
-      submissions.forEach(sub => {
-        if (!topByDomainEvent[sub.domain]) topByDomainEvent[sub.domain] = {};
-        const current = topByDomainEvent[sub.domain][sub.event];
-        if (!current || sub.value > current.value) {
-          topByDomainEvent[sub.domain][sub.event] = sub;
-        }
-      });
-      // Flatten to array for rendering
-      const topSubs: any[] = [];
-      domains.forEach(domain => {
-        events.filter(ev => ev.domain === domain.value).forEach(ev => {
-          const sub = topByDomainEvent[domain.value]?.[ev.value];
-          if (sub) {
-            topSubs.push({
-              domain: domain.label,
-              event: ev.label,
-              value: sub.value,
-              unit: getUnitLabel(ev.unitType),
-              timestamp: sub.timestamp,
-            });
-          }
-        });
-      });
-      setTopSubmissions(topSubs);
+
+      // Sort by creation date (latest first) and format for display
+      const formattedSubmissions = submissions
+        .sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || a.timestamp?.toDate?.() || new Date(a.createdAt || a.timestamp);
+          const dateB = b.createdAt?.toDate?.() || b.timestamp?.toDate?.() || new Date(b.createdAt || b.timestamp);
+          return dateB.getTime() - dateA.getTime();
+        })
+        .map(sub => ({
+          id: sub.id,
+          domain: getDomainLabel(sub.event?.domain || ''),
+          event: getEventLabel(sub.event?.value || sub.event),
+          value: sub.value,
+          unit: sub.unit || getUnitLabel(sub.event?.unitType),
+          timestamp: sub.timestamp,
+          createdAt: sub.createdAt,
+        }));
+
+      console.log('Latest submissions:', formattedSubmissions);
+      setLatestSubmissions(formattedSubmissions);
       setLoading(false);
     }
     fetchData();
@@ -83,7 +101,7 @@ export default function Home() {
     <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
       <h1 className="text-3xl font-bold mb-8 text-center">Your Scalar Dashboard</h1>
       <div>
-        <h2 className="text-xl font-bold mb-4">Top Event Submissions</h2>
+        <h2 className="text-xl font-bold mb-4">Latest Submissions</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-300 rounded">
             <thead className="bg-gray-100">
@@ -98,18 +116,25 @@ export default function Home() {
             <tbody>
               {loading || eventsLoading || unitsLoading || domainsLoading ? (
                 <tr><td colSpan={5}>Loading...</td></tr>
-              ) : topSubmissions.length === 0 ? (
+              ) : latestSubmissions.length === 0 ? (
                 <tr><td colSpan={5}>No submissions found.</td></tr>
               ) : (
-                topSubmissions.map((row, i) => (
-                  <tr key={row.domain + '-' + row.event}>
-                    <td className="px-4 py-2 border-b">{row.domain}</td>
-                    <td className="px-4 py-2 border-b">{row.event}</td>
-                    <td className="px-4 py-2 border-b">{row.value}</td>
-                    <td className="px-4 py-2 border-b">{row.unit}</td>
-                    <td className="px-4 py-2 border-b">{formatDate(row.timestamp)}</td>
-                  </tr>
-                ))
+                latestSubmissions.map((row, i) => {
+                  // Log the row and value for debugging
+                  console.log('Rendering row:', row);
+                  if (typeof row.value !== 'number' || isNaN(row.value)) {
+                    console.warn('Invalid row.value detected:', row.value, 'in row:', row);
+                  }
+                  return (
+                    <tr key={row.id || i}>
+                      <td className="px-4 py-2 border-b">{row.domain}</td>
+                      <td className="px-4 py-2 border-b">{row.event}</td>
+                      <td className="px-4 py-2 border-b">{typeof row.value === 'number' && !isNaN(row.value) ? row.value : '-'}</td>
+                      <td className="px-4 py-2 border-b">{row.unit}</td>
+                      <td className="px-4 py-2 border-b">{formatDate(row.createdAt || row.timestamp)}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

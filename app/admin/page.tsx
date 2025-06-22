@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import type { User } from '../lib/normalization/types';
+import type { User } from '../model/types';
 
 const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
 
