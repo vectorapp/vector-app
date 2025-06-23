@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
-import { db } from '../firebase';
+import { db } from '../model/data/access/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { useFirestoreCollection } from '../lib/useFirestoreCollection';
 

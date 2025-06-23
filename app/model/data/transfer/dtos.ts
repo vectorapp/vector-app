@@ -3,8 +3,8 @@ export type UserDto = {
   createdAt?: any; // Firestore Timestamp or Date
   firstName?: string;
   lastName?: string;
-  email: string;
-  genderId?: string; // Reference to gender instead of embedded object
+  email: string; // Required field
+  gender?: string; // Reference to gender instead of embedded object (matches Firestore field name)
   birthday?: string; // ISO date string (YYYY-MM-DD)
 };
 

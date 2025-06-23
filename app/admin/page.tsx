@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import { db } from '../firebase';
+import { db } from '../model/data/access';
 import {
   collection,
   getDocs,
@@ -14,6 +14,7 @@ import {
   getDoc,
 } from 'firebase/firestore';
 import type { User } from '../model/types';
+import { DataService } from '../model/data/access';
 
 const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
 
@@ -292,6 +293,88 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
   );
 }
 
+// Custom hook for User DataService operations
+function useUserDataService() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUsers() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllUsers();
+      console.log('[DataService] Fetched users:', data);
+      setUsers(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching users:', err);
+      setUsers([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  async function addUser(data: Record<string, any>) {
+    try {
+      // Convert form data to User format
+      const userData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        gender: { value: data.gender, label: data.gender }, // Simplified for now
+        birthday: data.birthday
+      };
+      const result = await DataService.createUser(userData);
+      console.log('[DataService] Added user:', result);
+      fetchUsers();
+    } catch (err) {
+      console.error('[DataService] Error adding user:', err);
+    }
+  }
+
+  async function removeUser(id: string) {
+    try {
+      await DataService.deleteUser(id);
+      console.log('[DataService] Deleted user:', id);
+      fetchUsers();
+    } catch (err) {
+      console.error('[DataService] Error deleting user:', err);
+    }
+  }
+
+  async function editUser(id: string, data: Record<string, any>) {
+    try {
+      // Convert form data to User format
+      const userData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        gender: { value: data.gender, label: data.gender }, // Simplified for now
+        birthday: data.birthday
+      };
+      const result = await DataService.updateUser(id, userData);
+      console.log('[DataService] Updated user:', result);
+      fetchUsers();
+    } catch (err) {
+      console.error('[DataService] Error updating user:', err);
+    }
+  }
+
+  return { 
+    items: users.map(user => ({ 
+      id: user.id || '', 
+      firstName: user.firstName, 
+      lastName: user.lastName, 
+      email: user.email, 
+      gender: user.gender?.value, 
+      birthday: user.birthday 
+    })), 
+    loading, 
+    addItem: addUser, 
+    removeItem: removeUser, 
+    editItem: editUser 
+  };
+}
+
 export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -300,16 +383,18 @@ export default function AdminPage() {
   const unitTypes = useFirestoreCollection('unitTypes');
   const units = useFirestoreCollection('units');
   const events = useFirestoreCollection('events');
-  const users = useFirestoreCollection('users');
+  const users = useUserDataService();
   const genders = useFirestoreCollection('genders');
   const ageGroups = useFirestoreCollection('ageGroups');
 
   useEffect(() => {
     async function fetchUser() {
-      const userDoc = await getDoc(doc(db, 'users', ADMIN_USER_ID));
-      if (userDoc.exists()) {
-        setCurrentUser({ id: userDoc.id, ...userDoc.data() } as User);
-      } else {
+      try {
+        const user = await DataService.getUserById(ADMIN_USER_ID);
+        console.log('[DataService] Fetched current user:', user);
+        setCurrentUser(user);
+      } catch (err) {
+        console.error('[DataService] Error fetching current user:', err);
         setCurrentUser(null);
       }
     }
@@ -378,9 +463,7 @@ export default function AdminPage() {
         title="Users"
         items={users.items}
         loading={users.loading}
-        onAdd={async (data) => {
-          await users.addItem({ ...data, createdAt: serverTimestamp() });
-        }}
+        onAdd={users.addItem}
         onDelete={users.removeItem}
         onEdit={users.editItem}
         promptFields={[

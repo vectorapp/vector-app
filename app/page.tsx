@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { useFirestoreCollection } from './lib/useFirestoreCollection';
-import { db } from './firebase';
+import { db } from './model/data/access/firebase';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 export default function Home() {

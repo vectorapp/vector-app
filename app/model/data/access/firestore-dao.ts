@@ -10,7 +10,7 @@ import {
   where, 
   serverTimestamp
 } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { db } from './firebase';
 import type { UserDao } from './dao';
 import type { User } from '../../types';
 import type { UserDto, GenderDto } from '../transfer/dtos';
@@ -103,22 +103,28 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
 
   protected async dtoToEntity(dto: UserDto): Promise<User> {
     // Fetch the gender object
-    const genderDoc = await getDoc(doc(db, 'genders', dto.genderId));
-    const genderData = genderDoc.exists() ? genderDoc.data() as GenderDto : null;
+    let gender = undefined;
     
-    const gender = genderData ? {
-      value: genderData.value,
-      label: genderData.label
-    } : undefined;
+    if (dto.gender) {
+      const genderDoc = await getDoc(doc(db, 'genders', dto.gender));
+      const genderData = genderDoc.exists() ? genderDoc.data() as GenderDto : null;
+      
+      if (genderData && genderData.value && genderData.label) {
+        gender = {
+          value: genderData.value,
+          label: genderData.label
+        };
+      }
+    }
 
     return {
       id: dto.id,
       createdAt: dto.createdAt,
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      email: dto.email,
+      firstName: dto.firstName || '',
+      lastName: dto.lastName || '',
+      email: dto.email || '',
       gender,
-      birthday: dto.birthday
+      birthday: dto.birthday || ''
     };
   }
 
@@ -127,7 +133,7 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
       firstName: entity.firstName,
       lastName: entity.lastName,
       email: entity.email,
-      genderId: entity.gender?.value || '',
+      gender: entity.gender?.value || '',
       birthday: entity.birthday
     };
   }

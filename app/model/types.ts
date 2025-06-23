@@ -9,7 +9,7 @@ export type AgeGroup = {
 };
 
 export type User = {
-  id: string; // Unique user identifier (e.g., email or UUID)
+  id?: string; // Unique user identifier (e.g., email or UUID)
   firstName?: string;
   lastName?: string;
   email: string;

@@ -5,4 +5,7 @@ export type { Dao, UserDao } from './dao';
 export { FirestoreUserDao } from './firestore-dao';
 
 // Export DataService for business operations
-export { DataService } from './service'; 
+export { DataService } from './service';
+
+// Export Firebase configuration
+export { db } from './firebase'; 

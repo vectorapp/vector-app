@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { db } from '../firebase';
+import { db } from '../model/data/access/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 
 export function useFirestoreCollection<T = any>(
