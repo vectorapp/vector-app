@@ -61,7 +61,12 @@ abstract class BaseFirestoreDao<T, TDto> {
     const entities: T[] = [];
     
     for (const doc of querySnapshot.docs) {
-      const dto = { id: doc.id, ...doc.data() } as TDto;
+      const rawData = doc.data();
+      console.log('[DataService] Raw Firestore data for user:', doc.id, rawData);
+      
+      const dto = { id: doc.id, ...rawData } as TDto;
+      console.log('[DataService] Created DTO from raw data:', dto);
+      
       const entity = await this.dtoToEntity(dto);
       entities.push(entity);
     }
@@ -102,22 +107,46 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
   }
 
   protected async dtoToEntity(dto: UserDto): Promise<User> {
+    console.log('[DataService] dtoToEntity called with DTO:', dto);
+    console.log('[DataService] DTO gender field:', dto.gender);
+    console.log('[DataService] DTO gender field type:', typeof dto.gender);
+    
     // Fetch the gender object
     let gender = undefined;
     
     if (dto.gender) {
-      const genderDoc = await getDoc(doc(db, 'genders', dto.gender));
-      const genderData = genderDoc.exists() ? genderDoc.data() as GenderDto : null;
+      console.log('[DataService] Looking for gender with value:', dto.gender);
       
-      if (genderData && genderData.value && genderData.label) {
-        gender = {
-          value: genderData.value,
-          label: genderData.label
-        };
+      // Find gender document by matching the value field
+      const gendersSnapshot = await getDocs(collection(db, 'genders'));
+      const genderDoc = gendersSnapshot.docs.find(doc => {
+        const data = doc.data() as GenderDto;
+        return data.value === dto.gender;
+      });
+      
+      console.log('[DataService] Found gender document:', genderDoc ? { id: genderDoc.id, data: genderDoc.data() } : null);
+      
+      if (genderDoc) {
+        const genderData = genderDoc.data() as GenderDto;
+        console.log('[DataService] Gender data:', genderData);
+        
+        if (genderData && genderData.value && genderData.label) {
+          gender = {
+            value: genderData.value,
+            label: genderData.label
+          };
+          console.log('[DataService] Created gender object:', gender);
+        } else {
+          console.log('[DataService] Gender data incomplete or missing');
+        }
+      } else {
+        console.log('[DataService] No gender document found with value:', dto.gender);
       }
+    } else {
+      console.log('[DataService] No gender field in DTO');
     }
 
-    return {
+    const result = {
       id: dto.id,
       createdAt: dto.createdAt,
       firstName: dto.firstName || '',
@@ -126,6 +155,9 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
       gender,
       birthday: dto.birthday || ''
     };
+    
+    console.log('[DataService] Final User object:', result);
+    return result;
   }
 
   protected async entityToDto(entity: Omit<User, 'id' | 'createdAt'>): Promise<Omit<UserDto, 'id' | 'createdAt'>> {
