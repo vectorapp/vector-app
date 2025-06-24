@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { UserDao } from './dao';
-import type { User, Gender } from '../../types';
-import type { UserDto, GenderDto } from '../transfer/dtos';
+import type { User, Gender, Domain } from '../../types';
+import type { UserDto, GenderDto, DomainDto } from '../transfer/dtos';
 
 // Base Firestore DAO implementation
 abstract class BaseFirestoreDao<T, TDto> {
@@ -290,5 +290,126 @@ export class FirestoreGenderDao {
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
     console.log('[GenderDao] Deleted gender:', id);
+  }
+}
+
+export class FirestoreDomainDao {
+  private collectionName = 'domains';
+
+  async create(domain: Omit<Domain, 'id'>): Promise<Domain> {
+    console.log('[DomainDao] Creating domain:', domain);
+    
+    const domainDto: Omit<DomainDto, 'id' | 'createdAt'> = {
+      label: domain.label,
+      value: domain.value
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...domainDto,
+      createdAt: new Date()
+    });
+
+    console.log('[DomainDao] Created domain with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      label: domain.label,
+      value: domain.value
+    };
+  }
+
+  async findById(id: string): Promise<Domain | null> {
+    console.log('[DomainDao] Finding domain by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[DomainDao] Domain not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as DomainDto;
+    console.log('[DomainDao] Found domain:', { id, ...data });
+
+    return {
+      id: docSnap.id,
+      label: data.label || '',
+      value: data.value || ''
+    };
+  }
+
+  async findByValue(value: string): Promise<Domain | null> {
+    console.log('[DomainDao] Finding domain by value:', value);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('value', '==', value)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log('[DomainDao] No domain found for value:', value);
+      return null;
+    }
+
+    const doc = querySnapshot.docs[0];
+    const data = doc.data() as DomainDto;
+    console.log('[DomainDao] Found domain by value:', { id: doc.id, ...data });
+
+    return {
+      id: doc.id,
+      label: data.label || '',
+      value: data.value || ''
+    };
+  }
+
+  async findAll(): Promise<Domain[]> {
+    console.log('[DomainDao] Finding all domains');
+    
+    const q = query(collection(db, this.collectionName), orderBy('label'));
+    const querySnapshot = await getDocs(q);
+    
+    const domains: Domain[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as DomainDto;
+      domains.push({
+        id: doc.id,
+        label: data.label || '',
+        value: data.value || ''
+      });
+    });
+
+    console.log('[DomainDao] Found', domains.length, 'domains');
+    return domains;
+  }
+
+  async update(id: string, domain: Partial<Omit<Domain, 'id'>>): Promise<Domain> {
+    console.log('[DomainDao] Updating domain:', id, domain);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<DomainDto> = {};
+    
+    if (domain.label !== undefined) updateData.label = domain.label;
+    if (domain.value !== undefined) updateData.value = domain.value;
+
+    await updateDoc(docRef, updateData);
+    console.log('[DomainDao] Updated domain:', id);
+
+    // Return the updated domain
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`Domain with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[DomainDao] Deleting domain:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[DomainDao] Deleted domain:', id);
   }
 } 

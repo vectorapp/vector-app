@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import type { User, Gender } from '../model/types';
+import type { User, Gender, Domain } from '../model/types';
 import { DataService } from '../model/data/access';
 
 const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
@@ -293,6 +293,77 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
   );
 }
 
+// Custom hook for Domain DataService operations
+function useDomainDataService() {
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchDomains() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllDomains();
+      console.log('[DataService] Fetched domains:', data);
+      setDomains(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching domains:', err);
+      setDomains([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchDomains(); }, []);
+
+  async function addDomain(data: Record<string, any>) {
+    try {
+      const domainData = {
+        label: data.label,
+        value: data.value
+      };
+      const result = await DataService.createDomain(domainData);
+      console.log('[DataService] Added domain:', result);
+      fetchDomains();
+    } catch (err) {
+      console.error('[DataService] Error adding domain:', err);
+    }
+  }
+
+  async function removeDomain(id: string) {
+    try {
+      await DataService.deleteDomain(id);
+      console.log('[DataService] Deleted domain:', id);
+      fetchDomains();
+    } catch (err) {
+      console.error('[DataService] Error deleting domain:', err);
+    }
+  }
+
+  async function editDomain(id: string, data: Record<string, any>) {
+    try {
+      const domainData = {
+        label: data.label,
+        value: data.value
+      };
+      const result = await DataService.updateDomain(id, domainData);
+      console.log('[DataService] Updated domain:', result);
+      fetchDomains();
+    } catch (err) {
+      console.error('[DataService] Error updating domain:', err);
+    }
+  }
+
+  return { 
+    items: domains.map(domain => ({ 
+      id: domain.id || '', 
+      label: domain.label, 
+      value: domain.value 
+    })), 
+    loading, 
+    addItem: addDomain, 
+    removeItem: removeDomain, 
+    editItem: editDomain 
+  };
+}
+
 // Custom hook for Gender DataService operations
 function useGenderDataService() {
   const [genders, setGenders] = useState<Gender[]>([]);
@@ -450,7 +521,7 @@ export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Always call hooks at the top level
-  const domains = useFirestoreCollection('domains');
+  const domains = useDomainDataService();
   const unitTypes = useFirestoreCollection('unitTypes');
   const units = useFirestoreCollection('units');
   const events = useFirestoreCollection('events');

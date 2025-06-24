@@ -1,9 +1,10 @@
-import { FirestoreUserDao, FirestoreGenderDao } from './firestore-dao';
-import type { User, Gender } from '../../types';
+import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao } from './firestore-dao';
+import type { User, Gender, Domain } from '../../types';
 
 // Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
 let genderDao: FirestoreGenderDao | null = null;
+let domainDao: FirestoreDomainDao | null = null;
 
 function getUserDao(): FirestoreUserDao {
   if (!userDao) {
@@ -17,6 +18,13 @@ function getGenderDao(): FirestoreGenderDao {
     genderDao = new FirestoreGenderDao();
   }
   return genderDao;
+}
+
+function getDomainDao(): FirestoreDomainDao {
+  if (!domainDao) {
+    domainDao = new FirestoreDomainDao();
+  }
+  return domainDao;
 }
 
 // DataService class that provides business logic operations
@@ -69,5 +77,30 @@ export class DataService {
 
   static async deleteGender(id: string): Promise<void> {
     return getGenderDao().delete(id);
+  }
+
+  // Domain operations
+  static async createDomain(domain: Omit<Domain, 'id'>): Promise<Domain> {
+    return getDomainDao().create(domain);
+  }
+
+  static async getDomainById(id: string): Promise<Domain | null> {
+    return getDomainDao().findById(id);
+  }
+
+  static async getDomainByValue(value: string): Promise<Domain | null> {
+    return getDomainDao().findByValue(value);
+  }
+
+  static async getAllDomains(): Promise<Domain[]> {
+    return getDomainDao().findAll();
+  }
+
+  static async updateDomain(id: string, domain: Partial<Omit<Domain, 'id'>>): Promise<Domain> {
+    return getDomainDao().update(id, domain);
+  }
+
+  static async deleteDomain(id: string): Promise<void> {
+    return getDomainDao().delete(id);
   }
 } 

@@ -13,4 +13,11 @@ export type GenderDto = {
   createdAt?: any; // Firestore Timestamp or Date
   value?: string;
   label?: string;
+};
+
+export type DomainDto = {
+  id?: string; // Unique identifier
+  createdAt?: any; // Firestore Timestamp or Date
+  label?: string;
+  value?: string;
 }; 

@@ -21,6 +21,7 @@ export type User = {
 };
 
 export type Domain = {
+  id?: string; // Unique identifier
   label: string;
   value: string;
 };
