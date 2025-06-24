@@ -1,10 +1,13 @@
-import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao } from './firestore-dao';
-import type { User, Gender, Domain } from '../../types';
+import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao } from './firestore-dao';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup } from '../../types';
 
 // Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
 let genderDao: FirestoreGenderDao | null = null;
 let domainDao: FirestoreDomainDao | null = null;
+let unitTypeDao: FirestoreUnitTypeDao | null = null;
+let unitDao: FirestoreUnitDao | null = null;
+let ageGroupDao: FirestoreAgeGroupDao | null = null;
 
 function getUserDao(): FirestoreUserDao {
   if (!userDao) {
@@ -25,6 +28,27 @@ function getDomainDao(): FirestoreDomainDao {
     domainDao = new FirestoreDomainDao();
   }
   return domainDao;
+}
+
+function getUnitTypeDao(): FirestoreUnitTypeDao {
+  if (!unitTypeDao) {
+    unitTypeDao = new FirestoreUnitTypeDao();
+  }
+  return unitTypeDao;
+}
+
+function getUnitDao(): FirestoreUnitDao {
+  if (!unitDao) {
+    unitDao = new FirestoreUnitDao();
+  }
+  return unitDao;
+}
+
+function getAgeGroupDao(): FirestoreAgeGroupDao {
+  if (!ageGroupDao) {
+    ageGroupDao = new FirestoreAgeGroupDao();
+  }
+  return ageGroupDao;
 }
 
 // DataService class that provides business logic operations
@@ -102,5 +126,80 @@ export class DataService {
 
   static async deleteDomain(id: string): Promise<void> {
     return getDomainDao().delete(id);
+  }
+
+  // UnitType operations
+  static async createUnitType(unitType: Omit<UnitType, 'id'>): Promise<UnitType> {
+    return getUnitTypeDao().create(unitType);
+  }
+
+  static async getUnitTypeById(id: string): Promise<UnitType | null> {
+    return getUnitTypeDao().findById(id);
+  }
+
+  static async getUnitTypeByValue(value: string): Promise<UnitType | null> {
+    return getUnitTypeDao().findByValue(value);
+  }
+
+  static async getAllUnitTypes(): Promise<UnitType[]> {
+    return getUnitTypeDao().findAll();
+  }
+
+  static async updateUnitType(id: string, unitType: Partial<Omit<UnitType, 'id'>>): Promise<UnitType> {
+    return getUnitTypeDao().update(id, unitType);
+  }
+
+  static async deleteUnitType(id: string): Promise<void> {
+    return getUnitTypeDao().delete(id);
+  }
+
+  // Unit operations
+  static async createUnit(unit: Omit<Unit, 'id'>): Promise<Unit> {
+    return getUnitDao().create(unit);
+  }
+
+  static async getUnitById(id: string): Promise<Unit | null> {
+    return getUnitDao().findById(id);
+  }
+
+  static async getUnitByValue(value: string): Promise<Unit | null> {
+    return getUnitDao().findByValue(value);
+  }
+
+  static async getAllUnits(): Promise<Unit[]> {
+    return getUnitDao().findAll();
+  }
+
+  static async updateUnit(id: string, unit: Partial<Omit<Unit, 'id'>>): Promise<Unit> {
+    return getUnitDao().update(id, unit);
+  }
+
+  static async deleteUnit(id: string): Promise<void> {
+    return getUnitDao().delete(id);
+  }
+
+  // AgeGroup operations
+  static async createAgeGroup(ageGroup: Omit<AgeGroup, 'id'>): Promise<AgeGroup> {
+    return getAgeGroupDao().create(ageGroup);
+  }
+
+  static async getAgeGroupById(id: string): Promise<AgeGroup | null> {
+    return getAgeGroupDao().findById(id);
+  }
+
+  static async getAgeGroupByBounds(lowerBound: number, upperBound: number): Promise<AgeGroup | null> {
+    return getAgeGroupDao().findByBounds(lowerBound, upperBound);
+  }
+
+  static async getAllAgeGroups(): Promise<AgeGroup[]> {
+    return getAgeGroupDao().findAll();
+  }
+
+  static async updateAgeGroup(id: string, ageGroup: Partial<Omit<AgeGroup, 'id'>>): Promise<AgeGroup> {
+    return getAgeGroupDao().update(id, ageGroup);
+  }
+
+  static async deleteAgeGroup(id: string): Promise<void> {
+    return getAgeGroupDao().delete(id);
   }
 } 

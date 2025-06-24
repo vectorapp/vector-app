@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import type { User, Gender, Domain } from '../model/types';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup } from '../model/types';
 import { DataService } from '../model/data/access';
 
 const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
@@ -517,17 +517,239 @@ function useUserDataService() {
   };
 }
 
+// Custom hook for Unit DataService operations
+function useUnitDataService() {
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUnits() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllUnits();
+      console.log('[DataService] Fetched units:', data);
+      setUnits(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching units:', err);
+      setUnits([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchUnits(); }, []);
+
+  async function addUnit(data: Record<string, any>) {
+    try {
+      const unitData = {
+        label: data.label,
+        value: data.value
+      };
+      const result = await DataService.createUnit(unitData);
+      console.log('[DataService] Added unit:', result);
+      fetchUnits();
+    } catch (err) {
+      console.error('[DataService] Error adding unit:', err);
+    }
+  }
+
+  async function removeUnit(id: string) {
+    try {
+      await DataService.deleteUnit(id);
+      console.log('[DataService] Deleted unit:', id);
+      fetchUnits();
+    } catch (err) {
+      console.error('[DataService] Error deleting unit:', err);
+    }
+  }
+
+  async function editUnit(id: string, data: Record<string, any>) {
+    try {
+      const unitData = {
+        label: data.label,
+        value: data.value
+      };
+      const result = await DataService.updateUnit(id, unitData);
+      console.log('[DataService] Updated unit:', result);
+      fetchUnits();
+    } catch (err) {
+      console.error('[DataService] Error updating unit:', err);
+    }
+  }
+
+  return { 
+    items: units.map(unit => ({ 
+      id: unit.id || '', 
+      label: unit.label, 
+      value: unit.value 
+    })), 
+    loading, 
+    addItem: addUnit, 
+    removeItem: removeUnit, 
+    editItem: editUnit 
+  };
+}
+
+// Custom hook for UnitType DataService operations
+function useUnitTypeDataService() {
+  const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchUnitTypes() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllUnitTypes();
+      console.log('[DataService] Fetched unitTypes:', data);
+      setUnitTypes(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching unitTypes:', err);
+      setUnitTypes([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchUnitTypes(); }, []);
+
+  async function addUnitType(data: Record<string, any>) {
+    try {
+      const unitTypeData = {
+        label: data.label,
+        value: data.value,
+        units: Array.isArray(data.units) ? data.units.map((unitValue: string) => ({
+          value: unitValue,
+          label: unitValue // We'll need to fetch the actual label if needed
+        })) : []
+      };
+      const result = await DataService.createUnitType(unitTypeData);
+      console.log('[DataService] Added unitType:', result);
+      fetchUnitTypes();
+    } catch (err) {
+      console.error('[DataService] Error adding unitType:', err);
+    }
+  }
+
+  async function removeUnitType(id: string) {
+    try {
+      await DataService.deleteUnitType(id);
+      console.log('[DataService] Deleted unitType:', id);
+      fetchUnitTypes();
+    } catch (err) {
+      console.error('[DataService] Error deleting unitType:', err);
+    }
+  }
+
+  async function editUnitType(id: string, data: Record<string, any>) {
+    try {
+      const unitTypeData = {
+        label: data.label,
+        value: data.value,
+        units: Array.isArray(data.units) ? data.units.map((unitValue: string) => ({
+          value: unitValue,
+          label: unitValue // We'll need to fetch the actual label if needed
+        })) : []
+      };
+      const result = await DataService.updateUnitType(id, unitTypeData);
+      console.log('[DataService] Updated unitType:', result);
+      fetchUnitTypes();
+    } catch (err) {
+      console.error('[DataService] Error updating unitType:', err);
+    }
+  }
+
+  return { 
+    items: unitTypes.map(unitType => ({ 
+      id: unitType.id || '', 
+      label: unitType.label, 
+      value: unitType.value,
+      units: unitType.units
+    })), 
+    loading, 
+    addItem: addUnitType, 
+    removeItem: removeUnitType, 
+    editItem: editUnitType 
+  };
+}
+
+// Custom hook for AgeGroup DataService operations
+function useAgeGroupDataService() {
+  const [ageGroups, setAgeGroups] = useState<AgeGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchAgeGroups() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllAgeGroups();
+      console.log('[DataService] Fetched ageGroups:', data);
+      setAgeGroups(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching ageGroups:', err);
+      setAgeGroups([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchAgeGroups(); }, []);
+
+  async function addAgeGroup(data: Record<string, any>) {
+    try {
+      const ageGroupData = {
+        lowerBound: Number(data.lowerBound),
+        upperBound: Number(data.upperBound)
+      };
+      const result = await DataService.createAgeGroup(ageGroupData);
+      console.log('[DataService] Added ageGroup:', result);
+      fetchAgeGroups();
+    } catch (err) {
+      console.error('[DataService] Error adding ageGroup:', err);
+    }
+  }
+
+  async function removeAgeGroup(id: string) {
+    try {
+      await DataService.deleteAgeGroup(id);
+      console.log('[DataService] Deleted ageGroup:', id);
+      fetchAgeGroups();
+    } catch (err) {
+      console.error('[DataService] Error deleting ageGroup:', err);
+    }
+  }
+
+  async function editAgeGroup(id: string, data: Record<string, any>) {
+    try {
+      const ageGroupData = {
+        lowerBound: Number(data.lowerBound),
+        upperBound: Number(data.upperBound)
+      };
+      const result = await DataService.updateAgeGroup(id, ageGroupData);
+      console.log('[DataService] Updated ageGroup:', result);
+      fetchAgeGroups();
+    } catch (err) {
+      console.error('[DataService] Error updating ageGroup:', err);
+    }
+  }
+
+  return { 
+    items: ageGroups.map(ageGroup => ({ 
+      id: ageGroup.id || '', 
+      lowerBound: ageGroup.lowerBound, 
+      upperBound: ageGroup.upperBound 
+    })), 
+    loading, 
+    addItem: addAgeGroup, 
+    removeItem: removeAgeGroup, 
+    editItem: editAgeGroup 
+  };
+}
+
 export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Always call hooks at the top level
   const domains = useDomainDataService();
-  const unitTypes = useFirestoreCollection('unitTypes');
-  const units = useFirestoreCollection('units');
+  const unitTypes = useUnitTypeDataService();
+  const units = useUnitDataService();
   const events = useFirestoreCollection('events');
   const users = useUserDataService();
   const genders = useGenderDataService();
-  const ageGroups = useFirestoreCollection('ageGroups');
+  const ageGroups = useAgeGroupDataService();
 
   useEffect(() => {
     async function fetchUser() {
@@ -632,17 +854,9 @@ export default function AdminPage() {
         title="Age Groups"
         items={ageGroups.items}
         loading={ageGroups.loading}
-        onAdd={async (data) => {
-          data.lowerBound = Number(data.lowerBound);
-          data.upperBound = Number(data.upperBound);
-          await ageGroups.addItem(data);
-        }}
+        onAdd={ageGroups.addItem}
         onDelete={ageGroups.removeItem}
-        onEdit={async (id, data) => {
-          data.lowerBound = Number(data.lowerBound);
-          data.upperBound = Number(data.upperBound);
-          await ageGroups.editItem(id, data);
-        }}
+        onEdit={ageGroups.editItem}
         promptFields={[
           { key: 'lowerBound', label: 'Lower Bound' },
           { key: 'upperBound', label: 'Upper Bound' },

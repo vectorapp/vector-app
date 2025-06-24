@@ -5,6 +5,7 @@ export type Gender = {
 };
 
 export type AgeGroup = {
+  id?: string; // Unique identifier
   lowerBound: number;
   upperBound: number;
 };
@@ -27,11 +28,13 @@ export type Domain = {
 };
 
 export type Unit = {
+  id?: string; // Unique identifier
   label: string;
   value: string;
 };
 
 export type UnitType = {
+  id?: string; // Unique identifier
   label: string;
   value: string;
   units: Unit[];

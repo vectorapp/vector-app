@@ -20,4 +20,26 @@ export type DomainDto = {
   createdAt?: any; // Firestore Timestamp or Date
   label?: string;
   value?: string;
+};
+
+export type UnitDto = {
+  id?: string; // Unique identifier
+  createdAt?: any; // Firestore Timestamp or Date
+  label?: string;
+  value?: string;
+};
+
+export type UnitTypeDto = {
+  id?: string; // Unique identifier
+  createdAt?: any; // Firestore Timestamp or Date
+  label?: string;
+  value?: string;
+  units?: string[]; // Array of unit IDs or values
+};
+
+export type AgeGroupDto = {
+  id?: string; // Unique identifier
+  createdAt?: any; // Firestore Timestamp or Date
+  lowerBound?: number;
+  upperBound?: number;
 }; 

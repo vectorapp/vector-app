@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { UserDao } from './dao';
-import type { User, Gender, Domain } from '../../types';
-import type { UserDto, GenderDto, DomainDto } from '../transfer/dtos';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup } from '../../types';
+import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto } from '../transfer/dtos';
 
 // Base Firestore DAO implementation
 abstract class BaseFirestoreDao<T, TDto> {
@@ -411,5 +411,396 @@ export class FirestoreDomainDao {
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
     console.log('[DomainDao] Deleted domain:', id);
+  }
+}
+
+export class FirestoreUnitTypeDao {
+  private collectionName = 'unitTypes';
+
+  async create(unitType: Omit<UnitType, 'id'>): Promise<UnitType> {
+    console.log('[UnitTypeDao] Creating unitType:', unitType);
+    
+    const unitTypeDto: Omit<UnitTypeDto, 'id' | 'createdAt'> = {
+      label: unitType.label,
+      value: unitType.value,
+      units: unitType.units.map(unit => unit.value || unit.id || '')
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...unitTypeDto,
+      createdAt: new Date()
+    });
+
+    console.log('[UnitTypeDao] Created unitType with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      label: unitType.label,
+      value: unitType.value,
+      units: unitType.units
+    };
+  }
+
+  async findById(id: string): Promise<UnitType | null> {
+    console.log('[UnitTypeDao] Finding unitType by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[UnitTypeDao] UnitType not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as UnitTypeDto;
+    console.log('[UnitTypeDao] Found unitType:', { id, ...data });
+
+    // Convert units array back to Unit objects
+    const units = data.units?.map(unitValue => ({
+      value: unitValue,
+      label: unitValue // We'll need to fetch the actual label if needed
+    })) || [];
+
+    return {
+      id: docSnap.id,
+      label: data.label || '',
+      value: data.value || '',
+      units: units
+    };
+  }
+
+  async findByValue(value: string): Promise<UnitType | null> {
+    console.log('[UnitTypeDao] Finding unitType by value:', value);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('value', '==', value)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log('[UnitTypeDao] No unitType found for value:', value);
+      return null;
+    }
+
+    const doc = querySnapshot.docs[0];
+    const data = doc.data() as UnitTypeDto;
+    console.log('[UnitTypeDao] Found unitType by value:', { id: doc.id, ...data });
+
+    // Convert units array back to Unit objects
+    const units = data.units?.map(unitValue => ({
+      value: unitValue,
+      label: unitValue // We'll need to fetch the actual label if needed
+    })) || [];
+
+    return {
+      id: doc.id,
+      label: data.label || '',
+      value: data.value || '',
+      units: units
+    };
+  }
+
+  async findAll(): Promise<UnitType[]> {
+    console.log('[UnitTypeDao] Finding all unitTypes');
+    
+    const q = query(collection(db, this.collectionName), orderBy('label'));
+    const querySnapshot = await getDocs(q);
+    
+    const unitTypes: UnitType[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as UnitTypeDto;
+      
+      // Convert units array back to Unit objects
+      const units = data.units?.map(unitValue => ({
+        value: unitValue,
+        label: unitValue // We'll need to fetch the actual label if needed
+      })) || [];
+
+      unitTypes.push({
+        id: doc.id,
+        label: data.label || '',
+        value: data.value || '',
+        units: units
+      });
+    });
+
+    console.log('[UnitTypeDao] Found', unitTypes.length, 'unitTypes');
+    return unitTypes;
+  }
+
+  async update(id: string, unitType: Partial<Omit<UnitType, 'id'>>): Promise<UnitType> {
+    console.log('[UnitTypeDao] Updating unitType:', id, unitType);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<UnitTypeDto> = {};
+    
+    if (unitType.label !== undefined) updateData.label = unitType.label;
+    if (unitType.value !== undefined) updateData.value = unitType.value;
+    if (unitType.units !== undefined) {
+      updateData.units = unitType.units.map(unit => unit.value || unit.id || '');
+    }
+
+    await updateDoc(docRef, updateData);
+    console.log('[UnitTypeDao] Updated unitType:', id);
+
+    // Return the updated unitType
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`UnitType with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[UnitTypeDao] Deleting unitType:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[UnitTypeDao] Deleted unitType:', id);
+  }
+}
+
+export class FirestoreUnitDao {
+  private collectionName = 'units';
+
+  async create(unit: Omit<Unit, 'id'>): Promise<Unit> {
+    console.log('[UnitDao] Creating unit:', unit);
+    
+    const unitDto: Omit<UnitDto, 'id' | 'createdAt'> = {
+      label: unit.label,
+      value: unit.value
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...unitDto,
+      createdAt: new Date()
+    });
+
+    console.log('[UnitDao] Created unit with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      label: unit.label,
+      value: unit.value
+    };
+  }
+
+  async findById(id: string): Promise<Unit | null> {
+    console.log('[UnitDao] Finding unit by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[UnitDao] Unit not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as UnitDto;
+    console.log('[UnitDao] Found unit:', { id, ...data });
+
+    return {
+      id: docSnap.id,
+      label: data.label || '',
+      value: data.value || ''
+    };
+  }
+
+  async findByValue(value: string): Promise<Unit | null> {
+    console.log('[UnitDao] Finding unit by value:', value);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('value', '==', value)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log('[UnitDao] No unit found for value:', value);
+      return null;
+    }
+
+    const doc = querySnapshot.docs[0];
+    const data = doc.data() as UnitDto;
+    console.log('[UnitDao] Found unit by value:', { id: doc.id, ...data });
+
+    return {
+      id: doc.id,
+      label: data.label || '',
+      value: data.value || ''
+    };
+  }
+
+  async findAll(): Promise<Unit[]> {
+    console.log('[UnitDao] Finding all units');
+    
+    const q = query(collection(db, this.collectionName), orderBy('label'));
+    const querySnapshot = await getDocs(q);
+    
+    const units: Unit[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as UnitDto;
+      units.push({
+        id: doc.id,
+        label: data.label || '',
+        value: data.value || ''
+      });
+    });
+
+    console.log('[UnitDao] Found', units.length, 'units');
+    return units;
+  }
+
+  async update(id: string, unit: Partial<Omit<Unit, 'id'>>): Promise<Unit> {
+    console.log('[UnitDao] Updating unit:', id, unit);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<UnitDto> = {};
+    
+    if (unit.label !== undefined) updateData.label = unit.label;
+    if (unit.value !== undefined) updateData.value = unit.value;
+
+    await updateDoc(docRef, updateData);
+    console.log('[UnitDao] Updated unit:', id);
+
+    // Return the updated unit
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`Unit with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[UnitDao] Deleting unit:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[UnitDao] Deleted unit:', id);
+  }
+}
+
+export class FirestoreAgeGroupDao {
+  private collectionName = 'ageGroups';
+
+  async create(ageGroup: Omit<AgeGroup, 'id'>): Promise<AgeGroup> {
+    console.log('[AgeGroupDao] Creating ageGroup:', ageGroup);
+    
+    const ageGroupDto: Omit<AgeGroupDto, 'id' | 'createdAt'> = {
+      lowerBound: ageGroup.lowerBound,
+      upperBound: ageGroup.upperBound
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...ageGroupDto,
+      createdAt: new Date()
+    });
+
+    console.log('[AgeGroupDao] Created ageGroup with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      lowerBound: ageGroup.lowerBound,
+      upperBound: ageGroup.upperBound
+    };
+  }
+
+  async findById(id: string): Promise<AgeGroup | null> {
+    console.log('[AgeGroupDao] Finding ageGroup by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[AgeGroupDao] AgeGroup not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as AgeGroupDto;
+    console.log('[AgeGroupDao] Found ageGroup:', { id, ...data });
+
+    return {
+      id: docSnap.id,
+      lowerBound: data.lowerBound || 0,
+      upperBound: data.upperBound || 0
+    };
+  }
+
+  async findByBounds(lowerBound: number, upperBound: number): Promise<AgeGroup | null> {
+    console.log('[AgeGroupDao] Finding ageGroup by bounds:', lowerBound, upperBound);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('lowerBound', '==', lowerBound),
+      where('upperBound', '==', upperBound)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log('[AgeGroupDao] No ageGroup found for bounds:', lowerBound, upperBound);
+      return null;
+    }
+
+    const doc = querySnapshot.docs[0];
+    const data = doc.data() as AgeGroupDto;
+    console.log('[AgeGroupDao] Found ageGroup by bounds:', { id: doc.id, ...data });
+
+    return {
+      id: doc.id,
+      lowerBound: data.lowerBound || 0,
+      upperBound: data.upperBound || 0
+    };
+  }
+
+  async findAll(): Promise<AgeGroup[]> {
+    console.log('[AgeGroupDao] Finding all ageGroups');
+    
+    const q = query(collection(db, this.collectionName), orderBy('lowerBound', 'asc'));
+    const querySnapshot = await getDocs(q);
+    
+    const ageGroups: AgeGroup[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as AgeGroupDto;
+      ageGroups.push({
+        id: doc.id,
+        lowerBound: data.lowerBound || 0,
+        upperBound: data.upperBound || 0
+      });
+    });
+
+    console.log('[AgeGroupDao] Found', ageGroups.length, 'ageGroups');
+    return ageGroups;
+  }
+
+  async update(id: string, ageGroup: Partial<Omit<AgeGroup, 'id'>>): Promise<AgeGroup> {
+    console.log('[AgeGroupDao] Updating ageGroup:', id, ageGroup);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<AgeGroupDto> = {};
+    
+    if (ageGroup.lowerBound !== undefined) updateData.lowerBound = ageGroup.lowerBound;
+    if (ageGroup.upperBound !== undefined) updateData.upperBound = ageGroup.upperBound;
+
+    await updateDoc(docRef, updateData);
+    console.log('[AgeGroupDao] Updated ageGroup:', id);
+
+    // Return the updated ageGroup
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`AgeGroup with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[AgeGroupDao] Deleting ageGroup:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[AgeGroupDao] Deleted ageGroup:', id);
   }
 } 
