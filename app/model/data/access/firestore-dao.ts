@@ -8,11 +8,12 @@ import {
   deleteDoc, 
   query, 
   where, 
-  serverTimestamp
+  serverTimestamp,
+  orderBy
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { UserDao } from './dao';
-import type { User } from '../../types';
+import type { User, Gender } from '../../types';
 import type { UserDto, GenderDto } from '../transfer/dtos';
 
 // Base Firestore DAO implementation
@@ -168,5 +169,126 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
       gender: entity.gender?.value || '',
       birthday: entity.birthday
     };
+  }
+}
+
+export class FirestoreGenderDao {
+  private collectionName = 'genders';
+
+  async create(gender: Omit<Gender, 'id'>): Promise<Gender> {
+    console.log('[GenderDao] Creating gender:', gender);
+    
+    const genderDto: Omit<GenderDto, 'id' | 'createdAt'> = {
+      value: gender.value,
+      label: gender.label
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...genderDto,
+      createdAt: new Date()
+    });
+
+    console.log('[GenderDao] Created gender with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      value: gender.value,
+      label: gender.label
+    };
+  }
+
+  async findById(id: string): Promise<Gender | null> {
+    console.log('[GenderDao] Finding gender by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[GenderDao] Gender not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as GenderDto;
+    console.log('[GenderDao] Found gender:', { id, ...data });
+
+    return {
+      id: docSnap.id,
+      value: data.value || '',
+      label: data.label || ''
+    };
+  }
+
+  async findByValue(value: string): Promise<Gender | null> {
+    console.log('[GenderDao] Finding gender by value:', value);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('value', '==', value)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log('[GenderDao] No gender found for value:', value);
+      return null;
+    }
+
+    const doc = querySnapshot.docs[0];
+    const data = doc.data() as GenderDto;
+    console.log('[GenderDao] Found gender by value:', { id: doc.id, ...data });
+
+    return {
+      id: doc.id,
+      value: data.value || '',
+      label: data.label || ''
+    };
+  }
+
+  async findAll(): Promise<Gender[]> {
+    console.log('[GenderDao] Finding all genders');
+    
+    const q = query(collection(db, this.collectionName), orderBy('label'));
+    const querySnapshot = await getDocs(q);
+    
+    const genders: Gender[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as GenderDto;
+      genders.push({
+        id: doc.id,
+        value: data.value || '',
+        label: data.label || ''
+      });
+    });
+
+    console.log('[GenderDao] Found', genders.length, 'genders');
+    return genders;
+  }
+
+  async update(id: string, gender: Partial<Omit<Gender, 'id'>>): Promise<Gender> {
+    console.log('[GenderDao] Updating gender:', id, gender);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<GenderDto> = {};
+    
+    if (gender.value !== undefined) updateData.value = gender.value;
+    if (gender.label !== undefined) updateData.label = gender.label;
+
+    await updateDoc(docRef, updateData);
+    console.log('[GenderDao] Updated gender:', id);
+
+    // Return the updated gender
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`Gender with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[GenderDao] Deleting gender:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[GenderDao] Deleted gender:', id);
   }
 } 

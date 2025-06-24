@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import type { User } from '../model/types';
+import type { User, Gender } from '../model/types';
 import { DataService } from '../model/data/access';
 
 const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
@@ -293,6 +293,77 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
   );
 }
 
+// Custom hook for Gender DataService operations
+function useGenderDataService() {
+  const [genders, setGenders] = useState<Gender[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchGenders() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllGenders();
+      console.log('[DataService] Fetched genders:', data);
+      setGenders(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching genders:', err);
+      setGenders([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchGenders(); }, []);
+
+  async function addGender(data: Record<string, any>) {
+    try {
+      const genderData = {
+        value: data.value,
+        label: data.label
+      };
+      const result = await DataService.createGender(genderData);
+      console.log('[DataService] Added gender:', result);
+      fetchGenders();
+    } catch (err) {
+      console.error('[DataService] Error adding gender:', err);
+    }
+  }
+
+  async function removeGender(id: string) {
+    try {
+      await DataService.deleteGender(id);
+      console.log('[DataService] Deleted gender:', id);
+      fetchGenders();
+    } catch (err) {
+      console.error('[DataService] Error deleting gender:', err);
+    }
+  }
+
+  async function editGender(id: string, data: Record<string, any>) {
+    try {
+      const genderData = {
+        value: data.value,
+        label: data.label
+      };
+      const result = await DataService.updateGender(id, genderData);
+      console.log('[DataService] Updated gender:', result);
+      fetchGenders();
+    } catch (err) {
+      console.error('[DataService] Error updating gender:', err);
+    }
+  }
+
+  return { 
+    items: genders.map(gender => ({ 
+      id: gender.id || '', 
+      value: gender.value, 
+      label: gender.label 
+    })), 
+    loading, 
+    addItem: addGender, 
+    removeItem: removeGender, 
+    editItem: editGender 
+  };
+}
+
 // Custom hook for User DataService operations
 function useUserDataService() {
   const [users, setUsers] = useState<User[]>([]);
@@ -384,7 +455,7 @@ export default function AdminPage() {
   const units = useFirestoreCollection('units');
   const events = useFirestoreCollection('events');
   const users = useUserDataService();
-  const genders = useFirestoreCollection('genders');
+  const genders = useGenderDataService();
   const ageGroups = useFirestoreCollection('ageGroups');
 
   useEffect(() => {

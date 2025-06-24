@@ -1,4 +1,5 @@
 export type Gender = {
+  id?: string; // Unique identifier
   value: string;
   label: string;
 };

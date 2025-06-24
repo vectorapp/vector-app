@@ -1,14 +1,22 @@
-import { FirestoreUserDao } from './firestore-dao';
-import type { User } from '../../types';
+import { FirestoreUserDao, FirestoreGenderDao } from './firestore-dao';
+import type { User, Gender } from '../../types';
 
-// Singleton instance of the User DAO
+// Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
+let genderDao: FirestoreGenderDao | null = null;
 
 function getUserDao(): FirestoreUserDao {
   if (!userDao) {
     userDao = new FirestoreUserDao();
   }
   return userDao;
+}
+
+function getGenderDao(): FirestoreGenderDao {
+  if (!genderDao) {
+    genderDao = new FirestoreGenderDao();
+  }
+  return genderDao;
 }
 
 // DataService class that provides business logic operations
@@ -36,5 +44,30 @@ export class DataService {
 
   static async deleteUser(id: string): Promise<void> {
     return getUserDao().delete(id);
+  }
+
+  // Gender operations
+  static async createGender(gender: Omit<Gender, 'id'>): Promise<Gender> {
+    return getGenderDao().create(gender);
+  }
+
+  static async getGenderById(id: string): Promise<Gender | null> {
+    return getGenderDao().findById(id);
+  }
+
+  static async getGenderByValue(value: string): Promise<Gender | null> {
+    return getGenderDao().findByValue(value);
+  }
+
+  static async getAllGenders(): Promise<Gender[]> {
+    return getGenderDao().findAll();
+  }
+
+  static async updateGender(id: string, gender: Partial<Omit<Gender, 'id'>>): Promise<Gender> {
+    return getGenderDao().update(id, gender);
+  }
+
+  static async deleteGender(id: string): Promise<void> {
+    return getGenderDao().delete(id);
   }
 } 
