@@ -42,4 +42,14 @@ export type AgeGroupDto = {
   createdAt?: any; // Firestore Timestamp or Date
   lowerBound?: number;
   upperBound?: number;
+};
+
+export type EventDto = {
+  id?: string; // Unique identifier
+  createdAt?: any; // Firestore Timestamp or Date
+  label?: string;
+  value?: string;
+  unitType?: string;
+  domain?: string;
+  description?: string;
 }; 

@@ -41,6 +41,7 @@ export type UnitType = {
 };
 
 export type Event = {
+  id?: string; // Unique identifier
   label: string;
   value: string;
   unitType: string;

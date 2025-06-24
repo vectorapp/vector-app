@@ -1,5 +1,5 @@
-import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao } from './firestore-dao';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup } from '../../types';
+import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao, FirestoreEventDao } from './firestore-dao';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../../types';
 
 // Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
@@ -8,6 +8,7 @@ let domainDao: FirestoreDomainDao | null = null;
 let unitTypeDao: FirestoreUnitTypeDao | null = null;
 let unitDao: FirestoreUnitDao | null = null;
 let ageGroupDao: FirestoreAgeGroupDao | null = null;
+let eventDao: FirestoreEventDao | null = null;
 
 function getUserDao(): FirestoreUserDao {
   if (!userDao) {
@@ -49,6 +50,13 @@ function getAgeGroupDao(): FirestoreAgeGroupDao {
     ageGroupDao = new FirestoreAgeGroupDao();
   }
   return ageGroupDao;
+}
+
+function getEventDao(): FirestoreEventDao {
+  if (!eventDao) {
+    eventDao = new FirestoreEventDao();
+  }
+  return eventDao;
 }
 
 // DataService class that provides business logic operations
@@ -201,5 +209,34 @@ export class DataService {
 
   static async deleteAgeGroup(id: string): Promise<void> {
     return getAgeGroupDao().delete(id);
+  }
+
+  // Event operations
+  static async createEvent(event: Omit<Event, 'id'>): Promise<Event> {
+    return getEventDao().create(event);
+  }
+
+  static async getEventById(id: string): Promise<Event | null> {
+    return getEventDao().findById(id);
+  }
+
+  static async getEventByValue(value: string): Promise<Event | null> {
+    return getEventDao().findByValue(value);
+  }
+
+  static async getEventsByDomain(domain: string): Promise<Event[]> {
+    return getEventDao().findByDomain(domain);
+  }
+
+  static async getAllEvents(): Promise<Event[]> {
+    return getEventDao().findAll();
+  }
+
+  static async updateEvent(id: string, event: Partial<Omit<Event, 'id'>>): Promise<Event> {
+    return getEventDao().update(id, event);
+  }
+
+  static async deleteEvent(id: string): Promise<void> {
+    return getEventDao().delete(id);
   }
 } 

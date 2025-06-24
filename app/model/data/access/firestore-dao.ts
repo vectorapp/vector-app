@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { UserDao } from './dao';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup } from '../../types';
-import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto } from '../transfer/dtos';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../../types';
+import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto, EventDto } from '../transfer/dtos';
 
 // Base Firestore DAO implementation
 abstract class BaseFirestoreDao<T, TDto> {
@@ -802,5 +802,172 @@ export class FirestoreAgeGroupDao {
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
     console.log('[AgeGroupDao] Deleted ageGroup:', id);
+  }
+}
+
+export class FirestoreEventDao {
+  private collectionName = 'events';
+
+  async create(event: Omit<Event, 'id'>): Promise<Event> {
+    console.log('[EventDao] Creating event:', event);
+    
+    const eventDto: Omit<EventDto, 'id' | 'createdAt'> = {
+      label: event.label,
+      value: event.value,
+      unitType: event.unitType,
+      domain: event.domain,
+      description: event.description
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...eventDto,
+      createdAt: new Date()
+    });
+
+    console.log('[EventDao] Created event with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      label: event.label,
+      value: event.value,
+      unitType: event.unitType,
+      domain: event.domain,
+      description: event.description
+    };
+  }
+
+  async findById(id: string): Promise<Event | null> {
+    console.log('[EventDao] Finding event by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[EventDao] Event not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as EventDto;
+    console.log('[EventDao] Found event:', { id, ...data });
+
+    return {
+      id: docSnap.id,
+      label: data.label || '',
+      value: data.value || '',
+      unitType: data.unitType || '',
+      domain: data.domain || '',
+      description: data.description
+    };
+  }
+
+  async findByValue(value: string): Promise<Event | null> {
+    console.log('[EventDao] Finding event by value:', value);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('value', '==', value)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      console.log('[EventDao] No event found for value:', value);
+      return null;
+    }
+
+    const doc = querySnapshot.docs[0];
+    const data = doc.data() as EventDto;
+    console.log('[EventDao] Found event by value:', { id: doc.id, ...data });
+
+    return {
+      id: doc.id,
+      label: data.label || '',
+      value: data.value || '',
+      unitType: data.unitType || '',
+      domain: data.domain || '',
+      description: data.description
+    };
+  }
+
+  async findByDomain(domain: string): Promise<Event[]> {
+    console.log('[EventDao] Finding events by domain:', domain);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('domain', '==', domain),
+      orderBy('label')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const events: Event[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as EventDto;
+      events.push({
+        id: doc.id,
+        label: data.label || '',
+        value: data.value || '',
+        unitType: data.unitType || '',
+        domain: data.domain || '',
+        description: data.description
+      });
+    });
+
+    console.log('[EventDao] Found', events.length, 'events for domain:', domain);
+    return events;
+  }
+
+  async findAll(): Promise<Event[]> {
+    console.log('[EventDao] Finding all events');
+    
+    const q = query(collection(db, this.collectionName), orderBy('domain'), orderBy('label'));
+    const querySnapshot = await getDocs(q);
+    
+    const events: Event[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as EventDto;
+      events.push({
+        id: doc.id,
+        label: data.label || '',
+        value: data.value || '',
+        unitType: data.unitType || '',
+        domain: data.domain || '',
+        description: data.description
+      });
+    });
+
+    console.log('[EventDao] Found', events.length, 'events');
+    return events;
+  }
+
+  async update(id: string, event: Partial<Omit<Event, 'id'>>): Promise<Event> {
+    console.log('[EventDao] Updating event:', id, event);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<EventDto> = {};
+    
+    if (event.label !== undefined) updateData.label = event.label;
+    if (event.value !== undefined) updateData.value = event.value;
+    if (event.unitType !== undefined) updateData.unitType = event.unitType;
+    if (event.domain !== undefined) updateData.domain = event.domain;
+    if (event.description !== undefined) updateData.description = event.description;
+
+    await updateDoc(docRef, updateData);
+    console.log('[EventDao] Updated event:', id);
+
+    // Return the updated event
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`Event with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[EventDao] Deleting event:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[EventDao] Deleted event:', id);
   }
 } 

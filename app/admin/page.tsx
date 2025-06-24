@@ -13,7 +13,7 @@ import {
   serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup } from '../model/types';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../model/types';
 import { DataService } from '../model/data/access';
 
 const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
@@ -739,6 +739,86 @@ function useAgeGroupDataService() {
   };
 }
 
+// Custom hook for Event DataService operations
+function useEventDataService() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchEvents() {
+    setLoading(true);
+    try {
+      const data = await DataService.getAllEvents();
+      console.log('[DataService] Fetched events:', data);
+      setEvents(data);
+    } catch (err) {
+      console.error('[DataService] Error fetching events:', err);
+      setEvents([]);
+    }
+    setLoading(false);
+  }
+
+  useEffect(() => { fetchEvents(); }, []);
+
+  async function addEvent(data: Record<string, any>) {
+    try {
+      const eventData = {
+        label: data.label,
+        value: data.value,
+        unitType: data.unitType,
+        domain: data.domain,
+        description: data.description
+      };
+      const result = await DataService.createEvent(eventData);
+      console.log('[DataService] Added event:', result);
+      fetchEvents();
+    } catch (err) {
+      console.error('[DataService] Error adding event:', err);
+    }
+  }
+
+  async function removeEvent(id: string) {
+    try {
+      await DataService.deleteEvent(id);
+      console.log('[DataService] Deleted event:', id);
+      fetchEvents();
+    } catch (err) {
+      console.error('[DataService] Error deleting event:', err);
+    }
+  }
+
+  async function editEvent(id: string, data: Record<string, any>) {
+    try {
+      const eventData = {
+        label: data.label,
+        value: data.value,
+        unitType: data.unitType,
+        domain: data.domain,
+        description: data.description
+      };
+      const result = await DataService.updateEvent(id, eventData);
+      console.log('[DataService] Updated event:', result);
+      fetchEvents();
+    } catch (err) {
+      console.error('[DataService] Error updating event:', err);
+    }
+  }
+
+  return { 
+    items: events.map(event => ({ 
+      id: event.id || '', 
+      label: event.label, 
+      value: event.value,
+      unitType: event.unitType,
+      domain: event.domain,
+      description: event.description
+    })), 
+    loading, 
+    addItem: addEvent, 
+    removeItem: removeEvent, 
+    editItem: editEvent 
+  };
+}
+
 export default function AdminPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -746,7 +826,7 @@ export default function AdminPage() {
   const domains = useDomainDataService();
   const unitTypes = useUnitTypeDataService();
   const units = useUnitDataService();
-  const events = useFirestoreCollection('events');
+  const events = useEventDataService();
   const users = useUserDataService();
   const genders = useGenderDataService();
   const ageGroups = useAgeGroupDataService();
