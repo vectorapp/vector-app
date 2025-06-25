@@ -51,11 +51,8 @@ export type Event = {
 
 export type Submission = {
   id?: string; // Firestore document ID (optional, for UI)
-  event: string;
-  value: number; // Raw value submitted by the user
   userId: string;
-  domain: string;
-  unit?: string;
-  timestamp?: any; // Firestore Timestamp or Date
-  notes?: string;
+  event: string;
+  rawValue: string; // Original value as entered by user
+  unit?: string | null; // Unit for non-time events, null for time events
 }; 

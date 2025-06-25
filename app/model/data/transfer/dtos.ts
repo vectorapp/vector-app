@@ -52,4 +52,13 @@ export type EventDto = {
   unitType?: string;
   domain?: string;
   description?: string;
+};
+
+export type SubmissionDto = {
+  id?: string; // Unique identifier
+  createdAt?: any; // Firestore Timestamp or Date
+  userId?: string;
+  event?: string;
+  rawValue?: string;
+  unit?: string | null; // Allow null for Firestore compatibility
 }; 

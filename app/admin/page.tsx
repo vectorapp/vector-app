@@ -1,18 +1,5 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import { db } from '../model/data/access';
-import {
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-  query,
-  orderBy,
-  setDoc,
-  serverTimestamp,
-  getDoc,
-} from 'firebase/firestore';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../model/types';
 import { DataService } from '../model/data/access';
 
@@ -21,67 +8,6 @@ const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
 type FirestoreItem = { id: string; [key: string]: any };
 
 type PromptField = { key: string; label: string; options?: { value: string; label: string }[]; multiple?: boolean };
-
-function useFirestoreCollection(collectionName: string) {
-  const [items, setItems] = useState<FirestoreItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  async function fetchItems() {
-    setLoading(true);
-    let q;
-    if (collectionName === 'users') {
-      q = query(collection(db, collectionName)); // No orderBy for users
-    } else if (collectionName === 'ageGroups') {
-      q = query(collection(db, collectionName), orderBy('lowerBound', 'asc'));
-    } else {
-      q = query(collection(db, collectionName), orderBy('label', 'asc'));
-    }
-    try {
-      const snapshot = await getDocs(q);
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log(`[Firestore] Fetched from ${collectionName}:`, docs);
-      setItems(docs);
-    } catch (err) {
-      console.error(`[Firestore] Error fetching from ${collectionName}:`, err);
-      setItems([]);
-    }
-    setLoading(false);
-  }
-
-  useEffect(() => { fetchItems(); }, []);
-
-  async function addItem(data: Record<string, any>) {
-    try {
-      const result = await addDoc(collection(db, collectionName), data);
-      console.log(`[Firestore] Added to ${collectionName}:`, data, 'Result:', result);
-      fetchItems();
-    } catch (err) {
-      console.error(`[Firestore] Error adding to ${collectionName}:`, err);
-    }
-  }
-
-  async function removeItem(id: string) {
-    try {
-      await deleteDoc(doc(db, collectionName, id));
-      console.log(`[Firestore] Deleted from ${collectionName}:`, id);
-      fetchItems();
-    } catch (err) {
-      console.error(`[Firestore] Error deleting from ${collectionName}:`, err);
-    }
-  }
-
-  async function editItem(id: string, data: Record<string, any>) {
-    try {
-      await setDoc(doc(db, collectionName, id), data, { merge: true });
-      console.log(`[Firestore] Edited in ${collectionName}:`, id, data);
-      fetchItems();
-    } catch (err) {
-      console.error(`[Firestore] Error editing in ${collectionName}:`, err);
-    }
-  }
-
-  return { items, loading, addItem, removeItem, editItem };
-}
 
 function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode = 'Add' }: {
   open: boolean;

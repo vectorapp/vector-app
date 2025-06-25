@@ -3,9 +3,8 @@ import { useState, useEffect } from "react";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
-import { db } from '../model/data/access/firebase';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { useFirestoreCollection } from '../lib/useFirestoreCollection';
+import type { User, Event, Unit, UnitType, Domain, Submission } from '../model/types';
+import { DataService } from '../model/data/access';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
@@ -16,26 +15,62 @@ function timeStringToSeconds(time: string): number {
 const CURRENT_USER_ID = 'o5NeITfIMwSQhhyV28HQ';
 
 export default function SubmitPage() {
-  const { items: events, loading: eventsLoading } = useFirestoreCollection('events', 'label');
-  const { items: units, loading: unitsLoading } = useFirestoreCollection('units', 'label');
-  const { items: unitTypes, loading: unitTypesLoading } = useFirestoreCollection('unitTypes', 'label');
-  const { items: domains, loading: domainsLoading } = useFirestoreCollection('domains', 'label');
+  const [events, setEvents] = useState<Event[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [unitsLoading, setUnitsLoading] = useState(true);
+  const [unitTypesLoading, setUnitTypesLoading] = useState(true);
+  const [domainsLoading, setDomainsLoading] = useState(true);
 
   const [event, setEvent] = useState<string>('');
   const [eventValue, setEventValue] = useState("");
   const [unit, setUnit] = useState("");
   const [timedEventValue, setTimedEventValue] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userLoading, setUserLoading] = useState(true);
 
-  // Fetch current user
+  // Fetch all data using DataService
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [eventsData, unitsData, unitTypesData, domainsData] = await Promise.all([
+          DataService.getAllEvents(),
+          DataService.getAllUnits(),
+          DataService.getAllUnitTypes(),
+          DataService.getAllDomains()
+        ]);
+        
+        setEvents(eventsData);
+        setUnits(unitsData);
+        setUnitTypes(unitTypesData);
+        setDomains(domainsData);
+        
+        setEventsLoading(false);
+        setUnitsLoading(false);
+        setUnitTypesLoading(false);
+        setDomainsLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setEventsLoading(false);
+        setUnitsLoading(false);
+        setUnitTypesLoading(false);
+        setDomainsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Fetch current user using DataService
   useEffect(() => {
     async function fetchUser() {
       setUserLoading(true);
-      const userDoc = await getDoc(doc(db, 'users', CURRENT_USER_ID));
-      if (userDoc.exists()) {
-        setCurrentUser({ id: userDoc.id, ...userDoc.data() });
-      } else {
+      try {
+        const user = await DataService.getUserById(CURRENT_USER_ID);
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Error fetching user:', error);
         setCurrentUser(null);
       }
       setUserLoading(false);
@@ -66,24 +101,25 @@ export default function SubmitPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
+    
     const currentEvent = events.find(ev => ev.value === event);
     const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
-    let normalizedValue = eventValue;
+    
     let rawValue = eventValue;
+    
     if (currentUnitType?.value === "time") {
-      normalizedValue = timeStringToSeconds(eventValue).toString();
       rawValue = eventValue;
     }
-    const submission = {
-      userId: currentUser.id,
+    
+    const submission: Omit<Submission, 'id'> = {
+      userId: currentUser.id || '',
       event,
-      normalizedValue: normalizedValue,
-      unit: currentUnitType?.value === "time" ? undefined : unit,
-      timestamp: serverTimestamp(),
       rawValue: rawValue,
+      unit: currentUnitType?.value === "time" ? undefined : unit
     };
+    
     try {
-      await addDoc(collection(db, 'submissions'), submission);
+      await DataService.createSubmission(submission);
       alert('Submission saved!');
       setEventValue("");
       if (currentUnitType?.value === "time") setTimedEventValue(null);
@@ -95,7 +131,7 @@ export default function SubmitPage() {
   const currentEvent = events.find(ev => ev.value === event);
   const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
   const availableUnits = currentUnitType
-    ? units.filter(u => (currentUnitType.units || []).includes(u.value))
+    ? units.filter(u => (currentUnitType.units || []).some(unit => unit.value === u.value))
     : [];
 
   // Debug logging

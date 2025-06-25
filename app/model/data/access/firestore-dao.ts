@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import type { UserDao } from './dao';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../../types';
-import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto, EventDto } from '../transfer/dtos';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
+import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto, EventDto, SubmissionDto } from '../transfer/dtos';
 
 // Base Firestore DAO implementation
 abstract class BaseFirestoreDao<T, TDto> {
@@ -969,5 +969,164 @@ export class FirestoreEventDao {
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
     console.log('[EventDao] Deleted event:', id);
+  }
+}
+
+export class FirestoreSubmissionDao {
+  private collectionName = 'submissions';
+
+  async create(submission: Omit<Submission, 'id'>): Promise<Submission> {
+    console.log('[SubmissionDao] Creating submission:', submission);
+    
+    const submissionDto: Omit<SubmissionDto, 'id' | 'createdAt'> = {
+      userId: submission.userId,
+      event: submission.event,
+      rawValue: submission.rawValue,
+      unit: submission.unit || null
+    };
+
+    const docRef = await addDoc(collection(db, this.collectionName), {
+      ...submissionDto,
+      createdAt: new Date()
+    });
+
+    console.log('[SubmissionDao] Created submission with ID:', docRef.id);
+    
+    return {
+      id: docRef.id,
+      userId: submission.userId,
+      event: submission.event,
+      rawValue: submission.rawValue,
+      unit: submission.unit
+    };
+  }
+
+  async findById(id: string): Promise<Submission | null> {
+    console.log('[SubmissionDao] Finding submission by ID:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      console.log('[SubmissionDao] Submission not found for ID:', id);
+      return null;
+    }
+
+    const data = docSnap.data() as SubmissionDto;
+    console.log('[SubmissionDao] Found submission:', { id, ...data });
+
+    return {
+      id: docSnap.id,
+      userId: data.userId || '',
+      event: data.event || '',
+      rawValue: data.rawValue || '',
+      unit: data.unit
+    };
+  }
+
+  async findByUserId(userId: string): Promise<Submission[]> {
+    console.log('[SubmissionDao] Finding submissions by userId:', userId);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const submissions: Submission[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as SubmissionDto;
+      submissions.push({
+        id: doc.id,
+        userId: data.userId || '',
+        event: data.event || '',
+        rawValue: data.rawValue || '',
+        unit: data.unit
+      });
+    });
+
+    console.log('[SubmissionDao] Found', submissions.length, 'submissions for userId:', userId);
+    return submissions;
+  }
+
+  async findByEvent(event: string): Promise<Submission[]> {
+    console.log('[SubmissionDao] Finding submissions by event:', event);
+    
+    const q = query(
+      collection(db, this.collectionName),
+      where('event', '==', event),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    const submissions: Submission[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as SubmissionDto;
+      submissions.push({
+        id: doc.id,
+        userId: data.userId || '',
+        event: data.event || '',
+        rawValue: data.rawValue || '',
+        unit: data.unit
+      });
+    });
+
+    console.log('[SubmissionDao] Found', submissions.length, 'submissions for event:', event);
+    return submissions;
+  }
+
+  async findAll(): Promise<Submission[]> {
+    console.log('[SubmissionDao] Finding all submissions');
+    
+    const q = query(collection(db, this.collectionName), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    const submissions: Submission[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as SubmissionDto;
+      submissions.push({
+        id: doc.id,
+        userId: data.userId || '',
+        event: data.event || '',
+        rawValue: data.rawValue || '',
+        unit: data.unit
+      });
+    });
+
+    console.log('[SubmissionDao] Found', submissions.length, 'submissions');
+    return submissions;
+  }
+
+  async update(id: string, submission: Partial<Omit<Submission, 'id'>>): Promise<Submission> {
+    console.log('[SubmissionDao] Updating submission:', id, submission);
+    
+    const docRef = doc(db, this.collectionName, id);
+    const updateData: Partial<SubmissionDto> = {};
+    
+    if (submission.userId !== undefined) updateData.userId = submission.userId;
+    if (submission.event !== undefined) updateData.event = submission.event;
+    if (submission.rawValue !== undefined) updateData.rawValue = submission.rawValue;
+    if (submission.unit !== undefined) updateData.unit = submission.unit || null;
+
+    await updateDoc(docRef, updateData);
+    console.log('[SubmissionDao] Updated submission:', id);
+
+    // Return the updated submission
+    const updated = await this.findById(id);
+    if (!updated) {
+      throw new Error(`Submission with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  async delete(id: string): Promise<void> {
+    console.log('[SubmissionDao] Deleting submission:', id);
+    
+    const docRef = doc(db, this.collectionName, id);
+    await deleteDoc(docRef);
+    console.log('[SubmissionDao] Deleted submission:', id);
   }
 } 

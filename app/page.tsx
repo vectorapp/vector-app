@@ -35,11 +35,11 @@ export default function Home() {
       if (eventsLoading || domainsLoading) return;
       const userId = "o5NeITfIMwSQhhyV28HQ";
       
-      // Query submissions ordered by timestamp (latest first) and limit to 20
+      // Query submissions ordered by createdAt (latest first) and limit to 20
       const q = query(
         collection(db, 'submissions'), 
         where('userId', '==', userId),
-        orderBy('timestamp', 'desc'),
+        orderBy('createdAt', 'desc'),
         limit(20)
       );
       
@@ -56,7 +56,6 @@ export default function Home() {
           rawValue: data.rawValue,
           userId: data.userId,
           unit: data.unit,
-          timestamp: data.timestamp ?? null,
           createdAt: data.createdAt ?? null,
         });
       });
@@ -64,8 +63,8 @@ export default function Home() {
       // Sort by creation date (latest first) and format for display
       const formattedSubmissions = submissions
         .sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || a.timestamp?.toDate?.() || new Date(a.createdAt || a.timestamp);
-          const dateB = b.createdAt?.toDate?.() || b.timestamp?.toDate?.() || new Date(b.createdAt || b.timestamp);
+          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
           return dateB.getTime() - dateA.getTime();
         })
         .map(sub => ({
@@ -74,7 +73,6 @@ export default function Home() {
           event: getEventLabel(sub.event?.value || sub.event),
           value: sub.value,
           unit: sub.unit || getUnitLabel(sub.event?.unitType),
-          timestamp: sub.timestamp,
           createdAt: sub.createdAt,
         }));
 
@@ -131,7 +129,7 @@ export default function Home() {
                       <td className="px-4 py-2 border-b">{row.event}</td>
                       <td className="px-4 py-2 border-b">{typeof row.value === 'number' && !isNaN(row.value) ? row.value : '-'}</td>
                       <td className="px-4 py-2 border-b">{row.unit}</td>
-                      <td className="px-4 py-2 border-b">{formatDate(row.createdAt || row.timestamp)}</td>
+                      <td className="px-4 py-2 border-b">{formatDate(row.createdAt)}</td>
                     </tr>
                   );
                 })

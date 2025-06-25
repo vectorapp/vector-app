@@ -1,5 +1,5 @@
-import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao, FirestoreEventDao } from './firestore-dao';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../../types';
+import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao, FirestoreEventDao, FirestoreSubmissionDao } from './firestore-dao';
+import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
 
 // Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
@@ -9,6 +9,7 @@ let unitTypeDao: FirestoreUnitTypeDao | null = null;
 let unitDao: FirestoreUnitDao | null = null;
 let ageGroupDao: FirestoreAgeGroupDao | null = null;
 let eventDao: FirestoreEventDao | null = null;
+let submissionDao: FirestoreSubmissionDao | null = null;
 
 function getUserDao(): FirestoreUserDao {
   if (!userDao) {
@@ -57,6 +58,13 @@ function getEventDao(): FirestoreEventDao {
     eventDao = new FirestoreEventDao();
   }
   return eventDao;
+}
+
+function getSubmissionDao(): FirestoreSubmissionDao {
+  if (!submissionDao) {
+    submissionDao = new FirestoreSubmissionDao();
+  }
+  return submissionDao;
 }
 
 // DataService class that provides business logic operations
@@ -238,5 +246,34 @@ export class DataService {
 
   static async deleteEvent(id: string): Promise<void> {
     return getEventDao().delete(id);
+  }
+
+  // Submission operations
+  static async createSubmission(submission: Omit<Submission, 'id'>): Promise<Submission> {
+    return getSubmissionDao().create(submission);
+  }
+
+  static async getSubmissionById(id: string): Promise<Submission | null> {
+    return getSubmissionDao().findById(id);
+  }
+
+  static async getSubmissionsByUserId(userId: string): Promise<Submission[]> {
+    return getSubmissionDao().findByUserId(userId);
+  }
+
+  static async getSubmissionsByEvent(event: string): Promise<Submission[]> {
+    return getSubmissionDao().findByEvent(event);
+  }
+
+  static async getAllSubmissions(): Promise<Submission[]> {
+    return getSubmissionDao().findAll();
+  }
+
+  static async updateSubmission(id: string, submission: Partial<Omit<Submission, 'id'>>): Promise<Submission> {
+    return getSubmissionDao().update(id, submission);
+  }
+
+  static async deleteSubmission(id: string): Promise<void> {
+    return getSubmissionDao().delete(id);
   }
 } 
