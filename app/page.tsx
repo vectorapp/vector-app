@@ -15,9 +15,19 @@ function timeStringToSeconds(time: string): number {
 // Helper to format date
 function formatDate(date: any): string {
   if (!date) return '';
-  const d = new Date(date);
+  // Firestore Timestamp object
+  if (typeof date.toDate === 'function') {
+    date = date.toDate();
+  }
+  // If it's a string or number, try to parse it
+  if (typeof date === 'string' || typeof date === 'number') {
+    date = new Date(date);
+  }
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return '';
+  }
   const now = new Date();
-  const diffInHours = (now.getTime() - d.getTime()) / (1000 * 60 * 60);
+  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
   
   if (diffInHours < 1) {
     const diffInMinutes = Math.floor(diffInHours * 60);
@@ -25,7 +35,7 @@ function formatDate(date: any): string {
   } else if (diffInHours < 24) {
     return `${Math.floor(diffInHours)}h ago`;
   } else {
-    return d.toLocaleDateString();
+    return date.toLocaleDateString();
   }
 }
 
