@@ -35,7 +35,6 @@ export default function RootLayout({
             <Link href="/" className="text-2xl font-bold text-blue-700 hover:text-blue-900">Scalar</Link>
           </div>
           <div className="flex gap-6 items-center">
-            <Link href="/submit" className="text-base font-medium text-gray-700 hover:text-blue-700">Submit</Link>
             <span className="text-base font-medium text-gray-400 cursor-not-allowed">Leaderboard</span>
             <span className="text-base font-medium text-gray-400 cursor-not-allowed">Profile</span>
             {userId === 'nlayton' && (
