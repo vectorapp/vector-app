@@ -55,4 +55,5 @@ export type Submission = {
   event: string;
   rawValue: string; // Original value as entered by user
   unit?: string | null; // Unit for non-time events, null for time events
+  createdAt?: any; // Firestore Timestamp or Date
 }; 

@@ -997,7 +997,8 @@ export class FirestoreSubmissionDao {
       userId: submission.userId,
       event: submission.event,
       rawValue: submission.rawValue,
-      unit: submission.unit
+      unit: submission.unit,
+      createdAt: new Date()
     };
   }
 
@@ -1020,7 +1021,8 @@ export class FirestoreSubmissionDao {
       userId: data.userId || '',
       event: data.event || '',
       rawValue: data.rawValue || '',
-      unit: data.unit
+      unit: data.unit,
+      createdAt: data.createdAt
     };
   }
 
@@ -1043,7 +1045,8 @@ export class FirestoreSubmissionDao {
         userId: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        unit: data.unit
+        unit: data.unit,
+        createdAt: data.createdAt
       });
     });
 
@@ -1070,7 +1073,8 @@ export class FirestoreSubmissionDao {
         userId: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        unit: data.unit
+        unit: data.unit,
+        createdAt: data.createdAt
       });
     });
 
@@ -1092,7 +1096,8 @@ export class FirestoreSubmissionDao {
         userId: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        unit: data.unit
+        unit: data.unit,
+        createdAt: data.createdAt
       });
     });
 

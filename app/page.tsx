@@ -1,86 +1,77 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { useFirestoreCollection } from './lib/useFirestoreCollection';
-import { db } from './model/data/access/firebase';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { DataService } from './model/data/access/service';
+import type { Event, Unit, Domain, Submission } from './model/types';
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
-  const [latestSubmissions, setLatestSubmissions] = useState<any[]>([]);
+  const [latestSubmissions, setLatestSubmissions] = useState<Submission[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [domains, setDomains] = useState<Domain[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [unitsLoading, setUnitsLoading] = useState(true);
+  const [domainsLoading, setDomainsLoading] = useState(true);
 
-  const { items: events, loading: eventsLoading } = useFirestoreCollection('events', 'label');
-  const { items: units, loading: unitsLoading } = useFirestoreCollection('units', 'label');
-  const { items: domains, loading: domainsLoading } = useFirestoreCollection('domains', 'label');
-  console.log('Events:', events);
-  console.log('Units:', units);
-  console.log('Domains:', domains);
+  // Fetch all data using DataService
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [eventsData, unitsData, domainsData] = await Promise.all([
+          DataService.getAllEvents(),
+          DataService.getAllUnits(),
+          DataService.getAllDomains()
+        ]);
+        
+        setEvents(eventsData);
+        setUnits(unitsData);
+        setDomains(domainsData);
+        
+        setEventsLoading(false);
+        setUnitsLoading(false);
+        setDomainsLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setEventsLoading(false);
+        setUnitsLoading(false);
+        setDomainsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   function getUnitLabel(unitType: string | undefined) {
-    const unitObj = units.find((u: any) => u.value === unitType);
-    return unitObj && unitObj.units && unitObj.units.length > 0 ? unitObj.units[0].label : '';
+    // This function is no longer needed since we're using the DataService approach
+    return '';
   }
 
   function getEventLabel(eventId: string) {
-    const event = events.find((e: any) => e.value === eventId);
+    const event = events.find((e) => e.value === eventId);
     return event ? event.label : eventId;
   }
 
   function getDomainLabel(domainId: string) {
-    const domain = domains.find((d: any) => d.value === domainId);
+    const domain = domains.find((d) => d.value === domainId);
     return domain ? domain.label : domainId;
   }
 
+  // Fetch submissions using DataService
   useEffect(() => {
-    async function fetchData() {
+    async function fetchSubmissions() {
       if (eventsLoading || domainsLoading) return;
       const userId = "o5NeITfIMwSQhhyV28HQ";
       
-      // Query submissions ordered by createdAt (latest first) and limit to 20
-      const q = query(
-        collection(db, 'submissions'), 
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc'),
-        limit(20)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const submissions: any[] = [];
-      
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        console.log('Submission data:', data);
-        submissions.push({
-          id: doc.id,
-          event: data.event,
-          value: Number(data.value),
-          rawValue: data.rawValue,
-          userId: data.userId,
-          unit: data.unit,
-          createdAt: data.createdAt ?? null,
-        });
-      });
-
-      // Sort by creation date (latest first) and format for display
-      const formattedSubmissions = submissions
-        .sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
-          return dateB.getTime() - dateA.getTime();
-        })
-        .map(sub => ({
-          id: sub.id,
-          domain: getDomainLabel(sub.event?.domain || ''),
-          event: getEventLabel(sub.event?.value || sub.event),
-          value: sub.value,
-          unit: sub.unit || getUnitLabel(sub.event?.unitType),
-          createdAt: sub.createdAt,
-        }));
-
-      console.log('Latest submissions:', formattedSubmissions);
-      setLatestSubmissions(formattedSubmissions);
-      setLoading(false);
+      try {
+        const submissions = await DataService.getSubmissionsByUserId(userId);
+        console.log('Latest submissions:', submissions);
+        setLatestSubmissions(submissions.slice(0, 20)); // Limit to 20
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching submissions:', error);
+        setLoading(false);
+      }
     }
-    fetchData();
+    fetchSubmissions();
   }, [events, eventsLoading, domains, domainsLoading]);
 
   function formatDate(ts: any) {
@@ -117,19 +108,18 @@ export default function Home() {
               ) : latestSubmissions.length === 0 ? (
                 <tr><td colSpan={5}>No submissions found.</td></tr>
               ) : (
-                latestSubmissions.map((row, i) => {
-                  // Log the row and value for debugging
-                  console.log('Rendering row:', row);
-                  if (typeof row.value !== 'number' || isNaN(row.value)) {
-                    console.warn('Invalid row.value detected:', row.value, 'in row:', row);
-                  }
+                latestSubmissions.map((submission, i) => {
+                  const event = events.find(e => e.value === submission.event);
+                  const domain = event ? domains.find(d => d.value === event.domain) : null;
+                  const unit = submission.unit ? units.find(u => u.value === submission.unit) : null;
+                  
                   return (
-                    <tr key={row.id || i}>
-                      <td className="px-4 py-2 border-b">{row.domain}</td>
-                      <td className="px-4 py-2 border-b">{row.event}</td>
-                      <td className="px-4 py-2 border-b">{typeof row.value === 'number' && !isNaN(row.value) ? row.value : '-'}</td>
-                      <td className="px-4 py-2 border-b">{row.unit}</td>
-                      <td className="px-4 py-2 border-b">{formatDate(row.createdAt)}</td>
+                    <tr key={submission.id || i}>
+                      <td className="px-4 py-2 border-b">{domain?.label || '-'}</td>
+                      <td className="px-4 py-2 border-b">{event?.label || submission.event}</td>
+                      <td className="px-4 py-2 border-b">{submission.rawValue}</td>
+                      <td className="px-4 py-2 border-b">{unit?.label || '-'}</td>
+                      <td className="px-4 py-2 border-b">{formatDate(submission.createdAt)}</td>
                     </tr>
                   );
                 })
