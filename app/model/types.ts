@@ -44,16 +44,17 @@ export type Event = {
   id?: string; // Unique identifier
   label: string;
   value: string;
-  unitType: string;
-  domain: string;
+  unitType: UnitType; // Full UnitType object
+  domain: Domain; // Full Domain object
   description?: string;
 };
 
 export type Submission = {
   id?: string; // Firestore document ID (optional, for UI)
-  userId: string;
-  event: string;
+  user: User; // Full User object
+  event: Event; // Full Event object
   rawValue: string; // Original value as entered by user
-  unit?: string | null; // Unit for non-time events, null for time events
+  value: number; // Business logic value (seconds for time, number for others)
+  unit?: Unit | null; // Full Unit object for non-time events, null for time events
   createdAt?: any; // Firestore Timestamp or Date
 }; 

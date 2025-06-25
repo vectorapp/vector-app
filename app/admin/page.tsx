@@ -734,8 +734,8 @@ function useEventDataService() {
       id: event.id || '', 
       label: event.label, 
       value: event.value,
-      unitType: event.unitType,
-      domain: event.domain,
+      unitType: event.unitType.value,
+      domain: event.domain.value,
       description: event.description
     })), 
     loading, 

@@ -4,7 +4,7 @@ import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import type { User, Event, Unit, UnitType, Domain, Submission } from '../model/types';
-import { DataService } from '../model/data/access';
+import { DataService } from '../model/data/access/service';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
@@ -90,9 +90,8 @@ export default function SubmitPage() {
     if (selectedEvent) {
       setEvent(e.target.value);
       // Find the unit type and set the first available unit
-      const unitType = unitTypes.find(u => u.value === selectedEvent.unitType);
-      if (unitType && unitType.units && unitType.units.length > 0) {
-        setUnit(unitType.units[0].value);
+      if (selectedEvent.unitType && selectedEvent.unitType.units && selectedEvent.unitType.units.length > 0) {
+        setUnit(selectedEvent.unitType.units[0].value);
       }
       setEventValue("");
     }
@@ -103,19 +102,36 @@ export default function SubmitPage() {
     if (!currentUser) return;
     
     const currentEvent = events.find(ev => ev.value === event);
-    const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
+    const currentUnitType = currentEvent?.unitType;
     
-    let rawValue = eventValue;
+    // Determine rawValue and calculate value based on event type
+    let rawValue: string;
+    let value: number;
+    let selectedUnit: Unit | null = null;
     
     if (currentUnitType?.value === "time") {
+      // For timed events, use the TimePicker value
+      rawValue = timedEventValue || "00:00:00";
+      value = timeStringToSeconds(rawValue);
+      selectedUnit = null;
+    } else {
+      // For other events, use the number input value
       rawValue = eventValue;
+      value = parseFloat(eventValue) || 0;
+      selectedUnit = units.find(u => u.value === unit) || null;
+    }
+    
+    if (!currentEvent) {
+      alert('Please select a valid event');
+      return;
     }
     
     const submission: Omit<Submission, 'id'> = {
-      userId: currentUser.id || '',
-      event,
+      user: currentUser,
+      event: currentEvent,
       rawValue: rawValue,
-      unit: currentUnitType?.value === "time" ? undefined : unit
+      value: value,
+      unit: selectedUnit
     };
     
     try {
@@ -129,9 +145,9 @@ export default function SubmitPage() {
   };
 
   const currentEvent = events.find(ev => ev.value === event);
-  const currentUnitType = currentEvent ? unitTypes.find(u => u.value === currentEvent.unitType) : null;
+  const currentUnitType = currentEvent?.unitType;
   const availableUnits = currentUnitType
-    ? units.filter(u => (currentUnitType.units || []).some(unit => unit.value === u.value))
+    ? currentUnitType.units || []
     : [];
 
   // Debug logging
@@ -144,7 +160,7 @@ export default function SubmitPage() {
   const eventsByDomain = domains.map(domain => ({
     domain: domain.value,
     label: domain.label,
-    events: events.filter(ev => ev.domain === domain.value)
+    events: events.filter(ev => ev.domain.value === domain.value)
   }));
 
   if (eventsLoading || unitsLoading || unitTypesLoading || domainsLoading || userLoading) {

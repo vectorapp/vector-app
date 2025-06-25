@@ -219,25 +219,91 @@ export class DataService {
     return getAgeGroupDao().delete(id);
   }
 
-  // Event operations
+  // Event operations (hydrated)
   static async createEvent(event: Omit<Event, 'id'>): Promise<Event> {
     return getEventDao().create(event);
   }
 
   static async getEventById(id: string): Promise<Event | null> {
-    return getEventDao().findById(id);
+    const event = await getEventDao().findById(id);
+    if (!event) return null;
+    
+    // Hydrate the event with full objects
+    const [unitTypes, domains] = await Promise.all([
+      this.getAllUnitTypes(),
+      this.getAllDomains()
+    ]);
+    
+    const unitType = unitTypes.find(u => u.value === (event as any).unitType || u.id === (event as any).unitType);
+    const domain = domains.find(d => d.value === (event as any).domain || d.id === (event as any).domain);
+    
+    return {
+      ...event,
+      unitType: unitType!,
+      domain: domain!
+    };
   }
 
   static async getEventByValue(value: string): Promise<Event | null> {
-    return getEventDao().findByValue(value);
+    const event = await getEventDao().findByValue(value);
+    if (!event) return null;
+    
+    // Hydrate the event with full objects
+    const [unitTypes, domains] = await Promise.all([
+      this.getAllUnitTypes(),
+      this.getAllDomains()
+    ]);
+    
+    const unitType = unitTypes.find(u => u.value === (event as any).unitType || u.id === (event as any).unitType);
+    const domain = domains.find(d => d.value === (event as any).domain || d.id === (event as any).domain);
+    
+    return {
+      ...event,
+      unitType: unitType!,
+      domain: domain!
+    };
   }
 
-  static async getEventsByDomain(domain: string): Promise<Event[]> {
-    return getEventDao().findByDomain(domain);
+  static async getEventsByDomain(domainValue: string): Promise<Event[]> {
+    const events = await getEventDao().findByDomain(domainValue);
+    
+    // Hydrate all events with full objects
+    const [unitTypes, domains] = await Promise.all([
+      this.getAllUnitTypes(),
+      this.getAllDomains()
+    ]);
+    
+    return events.map(event => {
+      const unitType = unitTypes.find(u => u.value === (event as any).unitType || u.id === (event as any).unitType);
+      const domain = domains.find(d => d.value === (event as any).domain || d.id === (event as any).domain);
+      
+      return {
+        ...event,
+        unitType: unitType!,
+        domain: domain!
+      };
+    });
   }
 
   static async getAllEvents(): Promise<Event[]> {
-    return getEventDao().findAll();
+    const events = await getEventDao().findAll();
+    
+    // Hydrate all events with full objects
+    const [unitTypes, domains] = await Promise.all([
+      this.getAllUnitTypes(),
+      this.getAllDomains()
+    ]);
+    
+    return events.map(event => {
+      const unitType = unitTypes.find(u => u.value === (event as any).unitType || u.id === (event as any).unitType);
+      const domain = domains.find(d => d.value === (event as any).domain || d.id === (event as any).domain);
+      
+      return {
+        ...event,
+        unitType: unitType!,
+        domain: domain!
+      };
+    });
   }
 
   static async updateEvent(id: string, event: Partial<Omit<Event, 'id'>>): Promise<Event> {
@@ -248,25 +314,104 @@ export class DataService {
     return getEventDao().delete(id);
   }
 
-  // Submission operations
+  // Submission operations (hydrated)
   static async createSubmission(submission: Omit<Submission, 'id'>): Promise<Submission> {
     return getSubmissionDao().create(submission);
   }
 
   static async getSubmissionById(id: string): Promise<Submission | null> {
-    return getSubmissionDao().findById(id);
+    const submission = await getSubmissionDao().findById(id);
+    if (!submission) return null;
+    
+    // Hydrate the submission with full objects
+    const [users, events, units] = await Promise.all([
+      this.getAllUsers(),
+      this.getAllEvents(),
+      this.getAllUnits()
+    ]);
+    
+    const user = users.find(u => u.id === (submission as any).userId);
+    const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
+    const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
+    
+    return {
+      ...submission,
+      user: user!,
+      event: event!,
+      unit: unit || null
+    };
   }
 
   static async getSubmissionsByUserId(userId: string): Promise<Submission[]> {
-    return getSubmissionDao().findByUserId(userId);
+    const submissions = await getSubmissionDao().findByUserId(userId);
+    
+    // Hydrate all submissions with full objects
+    const [users, events, units] = await Promise.all([
+      this.getAllUsers(),
+      this.getAllEvents(),
+      this.getAllUnits()
+    ]);
+    
+    return submissions.map(submission => {
+      const user = users.find(u => u.id === (submission as any).userId);
+      const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
+      const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
+      
+      return {
+        ...submission,
+        user: user!,
+        event: event!,
+        unit: unit || null
+      };
+    });
   }
 
-  static async getSubmissionsByEvent(event: string): Promise<Submission[]> {
-    return getSubmissionDao().findByEvent(event);
+  static async getSubmissionsByEvent(eventValue: string): Promise<Submission[]> {
+    const submissions = await getSubmissionDao().findByEvent(eventValue);
+    
+    // Hydrate all submissions with full objects
+    const [users, events, units] = await Promise.all([
+      this.getAllUsers(),
+      this.getAllEvents(),
+      this.getAllUnits()
+    ]);
+    
+    return submissions.map(submission => {
+      const user = users.find(u => u.id === (submission as any).userId);
+      const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
+      const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
+      
+      return {
+        ...submission,
+        user: user!,
+        event: event!,
+        unit: unit || null
+      };
+    });
   }
 
   static async getAllSubmissions(): Promise<Submission[]> {
-    return getSubmissionDao().findAll();
+    const submissions = await getSubmissionDao().findAll();
+    
+    // Hydrate all submissions with full objects
+    const [users, events, units] = await Promise.all([
+      this.getAllUsers(),
+      this.getAllEvents(),
+      this.getAllUnits()
+    ]);
+    
+    return submissions.map(submission => {
+      const user = users.find(u => u.id === (submission as any).userId);
+      const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
+      const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
+      
+      return {
+        ...submission,
+        user: user!,
+        event: event!,
+        unit: unit || null
+      };
+    });
   }
 
   static async updateSubmission(id: string, submission: Partial<Omit<Submission, 'id'>>): Promise<Submission> {

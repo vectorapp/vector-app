@@ -810,12 +810,12 @@ export class FirestoreEventDao {
 
   async create(event: Omit<Event, 'id'>): Promise<Event> {
     console.log('[EventDao] Creating event:', event);
-    
+    // Save only the string value for unitType and domain
     const eventDto: Omit<EventDto, 'id' | 'createdAt'> = {
       label: event.label,
       value: event.value,
-      unitType: event.unitType,
-      domain: event.domain,
+      unitType: event.unitType.value,
+      domain: event.domain.value,
       description: event.description
     };
 
@@ -825,31 +825,28 @@ export class FirestoreEventDao {
     });
 
     console.log('[EventDao] Created event with ID:', docRef.id);
-    
+    // Return the event with string IDs for unitType and domain (to be hydrated by DataService)
     return {
       id: docRef.id,
       label: event.label,
       value: event.value,
-      unitType: event.unitType,
-      domain: event.domain,
+      unitType: event.unitType.value,
+      domain: event.domain.value,
       description: event.description
-    };
+    } as unknown as Event; // DataService will hydrate to full objects
   }
 
   async findById(id: string): Promise<Event | null> {
     console.log('[EventDao] Finding event by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
-
     if (!docSnap.exists()) {
       console.log('[EventDao] Event not found for ID:', id);
       return null;
     }
-
     const data = docSnap.data() as EventDto;
     console.log('[EventDao] Found event:', { id, ...data });
-
+    // Return the event with string IDs for unitType and domain (to be hydrated by DataService)
     return {
       id: docSnap.id,
       label: data.label || '',
@@ -857,28 +854,23 @@ export class FirestoreEventDao {
       unitType: data.unitType || '',
       domain: data.domain || '',
       description: data.description
-    };
+    } as unknown as Event;
   }
 
   async findByValue(value: string): Promise<Event | null> {
     console.log('[EventDao] Finding event by value:', value);
-    
     const q = query(
       collection(db, this.collectionName),
       where('value', '==', value)
     );
-    
     const querySnapshot = await getDocs(q);
-    
     if (querySnapshot.empty) {
       console.log('[EventDao] No event found for value:', value);
       return null;
     }
-
     const doc = querySnapshot.docs[0];
     const data = doc.data() as EventDto;
     console.log('[EventDao] Found event by value:', { id: doc.id, ...data });
-
     return {
       id: doc.id,
       label: data.label || '',
@@ -886,20 +878,17 @@ export class FirestoreEventDao {
       unitType: data.unitType || '',
       domain: data.domain || '',
       description: data.description
-    };
+    } as unknown as Event;
   }
 
   async findByDomain(domain: string): Promise<Event[]> {
     console.log('[EventDao] Finding events by domain:', domain);
-    
     const q = query(
       collection(db, this.collectionName),
       where('domain', '==', domain),
       orderBy('label')
     );
-    
     const querySnapshot = await getDocs(q);
-    
     const events: Event[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data() as EventDto;
@@ -910,19 +899,16 @@ export class FirestoreEventDao {
         unitType: data.unitType || '',
         domain: data.domain || '',
         description: data.description
-      });
+      } as unknown as Event);
     });
-
     console.log('[EventDao] Found', events.length, 'events for domain:', domain);
     return events;
   }
 
   async findAll(): Promise<Event[]> {
     console.log('[EventDao] Finding all events');
-    
     const q = query(collection(db, this.collectionName), orderBy('domain'), orderBy('label'));
     const querySnapshot = await getDocs(q);
-    
     const events: Event[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data() as EventDto;
@@ -933,29 +919,24 @@ export class FirestoreEventDao {
         unitType: data.unitType || '',
         domain: data.domain || '',
         description: data.description
-      });
+      } as unknown as Event);
     });
-
     console.log('[EventDao] Found', events.length, 'events');
     return events;
   }
 
   async update(id: string, event: Partial<Omit<Event, 'id'>>): Promise<Event> {
     console.log('[EventDao] Updating event:', id, event);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<EventDto> = {};
-    
     if (event.label !== undefined) updateData.label = event.label;
     if (event.value !== undefined) updateData.value = event.value;
-    if (event.unitType !== undefined) updateData.unitType = event.unitType;
-    if (event.domain !== undefined) updateData.domain = event.domain;
+    if (event.unitType !== undefined) updateData.unitType = typeof event.unitType === 'string' ? event.unitType : event.unitType.value;
+    if (event.domain !== undefined) updateData.domain = typeof event.domain === 'string' ? event.domain : event.domain.value;
     if (event.description !== undefined) updateData.description = event.description;
-
     await updateDoc(docRef, updateData);
     console.log('[EventDao] Updated event:', id);
-
-    // Return the updated event
+    // Return the updated event with string IDs for unitType and domain
     const updated = await this.findById(id);
     if (!updated) {
       throw new Error(`Event with ID ${id} not found after update`);
@@ -978,11 +959,12 @@ export class FirestoreSubmissionDao {
   async create(submission: Omit<Submission, 'id'>): Promise<Submission> {
     console.log('[SubmissionDao] Creating submission:', submission);
     
+    // Extract string IDs from full objects for DTO
     const submissionDto: Omit<SubmissionDto, 'id' | 'createdAt'> = {
-      userId: submission.userId,
-      event: submission.event,
+      userId: submission.user.id || submission.user.email,
+      event: submission.event.value,
       rawValue: submission.rawValue,
-      unit: submission.unit || null
+      unit: submission.unit ? submission.unit.value : null
     };
 
     const docRef = await addDoc(collection(db, this.collectionName), {
@@ -992,14 +974,16 @@ export class FirestoreSubmissionDao {
 
     console.log('[SubmissionDao] Created submission with ID:', docRef.id);
     
+    // Return with string IDs (to be hydrated by DataService)
     return {
       id: docRef.id,
-      userId: submission.userId,
-      event: submission.event,
+      user: submissionDto.userId,
+      event: submissionDto.event,
       rawValue: submission.rawValue,
-      unit: submission.unit,
+      value: submission.value,
+      unit: submissionDto.unit,
       createdAt: new Date()
-    };
+    } as unknown as Submission;
   }
 
   async findById(id: string): Promise<Submission | null> {
@@ -1016,14 +1000,16 @@ export class FirestoreSubmissionDao {
     const data = docSnap.data() as SubmissionDto;
     console.log('[SubmissionDao] Found submission:', { id, ...data });
 
+    // Return with string IDs (to be hydrated by DataService)
     return {
       id: docSnap.id,
-      userId: data.userId || '',
+      user: data.userId || '',
       event: data.event || '',
       rawValue: data.rawValue || '',
-      unit: data.unit,
+      value: 0, // Will be computed by DataService
+      unit: data.unit || null,
       createdAt: data.createdAt
-    };
+    } as unknown as Submission;
   }
 
   async findByUserId(userId: string): Promise<Submission[]> {
@@ -1042,12 +1028,13 @@ export class FirestoreSubmissionDao {
       const data = doc.data() as SubmissionDto;
       submissions.push({
         id: doc.id,
-        userId: data.userId || '',
+        user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        unit: data.unit,
+        value: 0, // Will be computed by DataService
+        unit: data.unit || null,
         createdAt: data.createdAt
-      });
+      } as unknown as Submission);
     });
 
     console.log('[SubmissionDao] Found', submissions.length, 'submissions for userId:', userId);
@@ -1070,12 +1057,13 @@ export class FirestoreSubmissionDao {
       const data = doc.data() as SubmissionDto;
       submissions.push({
         id: doc.id,
-        userId: data.userId || '',
+        user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        unit: data.unit,
+        value: 0, // Will be computed by DataService
+        unit: data.unit || null,
         createdAt: data.createdAt
-      });
+      } as unknown as Submission);
     });
 
     console.log('[SubmissionDao] Found', submissions.length, 'submissions for event:', event);
@@ -1093,12 +1081,13 @@ export class FirestoreSubmissionDao {
       const data = doc.data() as SubmissionDto;
       submissions.push({
         id: doc.id,
-        userId: data.userId || '',
+        user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        unit: data.unit,
+        value: 0, // Will be computed by DataService
+        unit: data.unit || null,
         createdAt: data.createdAt
-      });
+      } as unknown as Submission);
     });
 
     console.log('[SubmissionDao] Found', submissions.length, 'submissions');
@@ -1111,15 +1100,21 @@ export class FirestoreSubmissionDao {
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<SubmissionDto> = {};
     
-    if (submission.userId !== undefined) updateData.userId = submission.userId;
-    if (submission.event !== undefined) updateData.event = submission.event;
+    if (submission.user !== undefined) {
+      updateData.userId = typeof submission.user === 'string' ? submission.user : submission.user.id || submission.user.email;
+    }
+    if (submission.event !== undefined) {
+      updateData.event = typeof submission.event === 'string' ? submission.event : submission.event.value;
+    }
     if (submission.rawValue !== undefined) updateData.rawValue = submission.rawValue;
-    if (submission.unit !== undefined) updateData.unit = submission.unit || null;
+    if (submission.unit !== undefined) {
+      updateData.unit = submission.unit ? (typeof submission.unit === 'string' ? submission.unit : submission.unit.value) : null;
+    }
 
     await updateDoc(docRef, updateData);
     console.log('[SubmissionDao] Updated submission:', id);
 
-    // Return the updated submission
+    // Return the updated submission with string IDs
     const updated = await this.findById(id);
     if (!updated) {
       throw new Error(`Submission with ID ${id} not found after update`);
