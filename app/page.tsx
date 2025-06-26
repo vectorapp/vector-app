@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
+import { FiChevronUp, FiMessageCircle, FiShare } from 'react-icons/fi';
 import type { User, Event, Unit, UnitType, Domain, Submission } from './model/types';
 import { DataService } from './model/data/access/service';
 
@@ -247,26 +248,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto p-6">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Scalar Feed</h1>
-          <p className="text-gray-600">Track your progress and see your recent achievements</p>
-        </div>
+        {/* Plain Feed Header */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Feed</h1>
 
-        {/* New Post Button */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <button
-            onClick={() => setShowNewPostForm(!showNewPostForm)}
-            className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            {showNewPostForm ? 'Cancel' : 'Log New Performance'}
-          </button>
-        </div>
+        {/* Social Media Style New Post Input */}
+        {!showNewPostForm && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center gap-3 cursor-pointer" onClick={() => setShowNewPostForm(true)}>
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 text-lg">
+              {currentUser?.firstName ? currentUser.firstName[0] : (currentUser?.email ? currentUser.email[0].toUpperCase() : '?')}
+            </div>
+            <div className="flex-1 text-gray-500 text-base">
+              {"What's your latest workout or achievement?"}
+            </div>
+          </div>
+        )}
 
-        {/* New Post Form */}
+        {/* New Post Form (expanded) */}
         {showNewPostForm && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Log New Performance</h2>
@@ -362,8 +359,6 @@ export default function Home() {
 
         {/* Feed */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
-          
           {submissionsLoading ? (
             <div className="bg-white rounded-lg shadow-sm p-6 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
@@ -439,6 +434,21 @@ export default function Home() {
                         <div className="text-xs text-gray-500">Unit</div>
                       </div>
                     )}
+                  </div>
+                  {/* Reaction icons row */}
+                  <div className="flex items-center gap-8 mt-4 text-gray-500">
+                    <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+                      <FiChevronUp className="w-5 h-5" />
+                      <span className="text-sm font-medium">Like</span>
+                    </button>
+                    <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+                      <FiMessageCircle className="w-5 h-5" />
+                      <span className="text-sm font-medium">Comment</span>
+                    </button>
+                    <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+                      <FiShare className="w-5 h-5" />
+                      <span className="text-sm font-medium">Share</span>
+                    </button>
                   </div>
                 </div>
               );

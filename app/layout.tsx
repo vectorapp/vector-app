@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from 'next/link';
+import BottomNav from "./BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,8 +12,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
-
-const userId = 'nlayton'; // Hardcoded for now
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -27,22 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <nav className="w-full flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm mb-8">
-          <div>
-            <Link href="/" className="text-2xl font-bold text-blue-700 hover:text-blue-900">Scalar</Link>
-          </div>
-          <div className="flex gap-6 items-center">
-            <span className="text-base font-medium text-gray-400 cursor-not-allowed">Leaderboard</span>
-            <span className="text-base font-medium text-gray-400 cursor-not-allowed">Profile</span>
-            {userId === 'nlayton' && (
-              <Link href="/admin" className="text-base font-medium text-red-700 hover:text-red-900">Admin</Link>
-            )}
-          </div>
-        </nav>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
+        {/* Top nav removed for bottom nav prep */}
         {children}
+        <BottomNav />
       </body>
     </html>
   );
