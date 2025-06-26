@@ -202,18 +202,13 @@ export default function Home() {
     
     try {
       await DataService.createSubmission(submission);
-      
       // Refresh submissions
       const userSubmissions = await DataService.getSubmissionsByUserId(currentUser.id || currentUser.email);
       setSubmissions(userSubmissions);
-      
       // Reset form
       setEventValue("");
       if (currentUnitType?.value === "time") setTimedEventValue(null);
       setShowNewPostForm(false);
-      
-      // Show success message
-      alert('Performance logged successfully! 🎉');
     } catch (error) {
       alert('Error saving submission: ' + error);
     } finally {
