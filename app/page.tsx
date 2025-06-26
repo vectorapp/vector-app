@@ -275,7 +275,7 @@ export default function Home() {
                 <select
                   value={event}
                   onChange={handleEventChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                   disabled={!currentUser}
                 >
                   {eventsByDomain.map(group => (
@@ -299,7 +299,7 @@ export default function Home() {
                     format="HH:mm:ss"
                     disableClock
                     clearIcon={null}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     required
                     disabled={!currentUser}
                   />
@@ -308,7 +308,7 @@ export default function Home() {
                     type="number"
                     value={eventValue}
                     onChange={e => setEventValue(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     required
                     disabled={!currentUser}
                     placeholder="Enter your value"
@@ -324,7 +324,7 @@ export default function Home() {
                   <select
                     value={unit}
                     onChange={e => setUnit(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     disabled={!currentUser}
                   >
                     {availableUnits.map(u => (
