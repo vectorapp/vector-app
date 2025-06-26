@@ -330,7 +330,7 @@ export class DataService {
       this.getAllUnits()
     ]);
     
-    const user = users.find(u => u.id === (submission as any).userId);
+    const user = users.find(u => u.id === (submission as any).user || u.email === (submission as any).user);
     const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
     const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
     
@@ -353,7 +353,7 @@ export class DataService {
     ]);
     
     return submissions.map(submission => {
-      const user = users.find(u => u.id === (submission as any).userId);
+      const user = users.find(u => u.id === (submission as any).user || u.email === (submission as any).user);
       const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
       const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
       
@@ -377,7 +377,7 @@ export class DataService {
     ]);
     
     return submissions.map(submission => {
-      const user = users.find(u => u.id === (submission as any).userId);
+      const user = users.find(u => u.id === (submission as any).user || u.email === (submission as any).user);
       const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
       const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
       
@@ -401,7 +401,7 @@ export class DataService {
     ]);
     
     return submissions.map(submission => {
-      const user = users.find(u => u.id === (submission as any).userId);
+      const user = users.find(u => u.id === (submission as any).user || u.email === (submission as any).user);
       const event = events.find(e => e.value === (submission as any).event || e.id === (submission as any).event);
       const unit = (submission as any).unit ? units.find(u => u.value === (submission as any).unit || u.id === (submission as any).unit) : null;
       

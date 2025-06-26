@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
-import { FiChevronUp, FiMessageCircle, FiShare } from 'react-icons/fi';
+import { FiThumbsUp, FiMessageCircle, FiShare } from 'react-icons/fi';
 import type { User, Event, Unit, UnitType, Domain, Submission } from './model/types';
 import { DataService } from './model/data/access/service';
 
@@ -377,34 +377,62 @@ export default function Home() {
             </div>
           ) : (
             submissions.map((submission) => {
+              console.log('=== SUBMISSION MAPPING DEBUG ===');
+              console.log('submission.id:', submission.id);
+              console.log('submission.user:', submission.user);
+              console.log('submission.event:', submission.event);
+              console.log('submission.value:', submission.value);
+              console.log('submission.rawValue:', submission.rawValue);
+              console.log('submission.unit:', submission.unit);
+              console.log('submission.createdAt:', submission.createdAt);
+              console.log('submission.event.unitType:', submission.event.unitType);
+              
               console.log('submission.user', submission.user);
               let userName = 'Unknown User';
+              let userInitials = '?';
               if (submission.user) {
+                console.log('User data exists, checking type...');
                 if (typeof submission.user === 'string') {
+                  console.log('User is string type, using as userName');
                   userName = submission.user;
+                  userInitials = userName.charAt(0).toUpperCase();
                 } else if (submission.user.firstName || submission.user.lastName) {
+                  console.log('User has firstName/lastName, combining them');
                   userName = `${submission.user.firstName || ''} ${submission.user.lastName || ''}`.trim();
+                  userInitials = `${submission.user.firstName?.charAt(0) || ''}${submission.user.lastName?.charAt(0) || ''}`.toUpperCase();
                 } else if (submission.user.email) {
+                  console.log('User has email, using as userName');
                   userName = submission.user.email;
+                  userInitials = userName.charAt(0).toUpperCase();
+                } else {
+                  console.log('User object exists but no usable name fields found');
                 }
+              } else {
+                console.log('No user data found, using default "Unknown User"');
               }
               return (
                 <div key={submission.id} className="bg-white rounded-lg shadow-sm p-6">
                   {/* User name and date row */}
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-gray-900">{userName}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-semibold text-blue-700">{userInitials}</span>
+                      </div>
+                      <span className="font-semibold text-gray-900">{userName}</span>
+                    </div>
                     <span className="text-sm text-gray-500">{formatDate(submission.createdAt)}</span>
                   </div>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
+                        <FiThumbsUp className="w-5 h-5" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{submission.event.label}</h3>
                         <p className="text-sm text-gray-500">{submission.event.domain.label}</p>
+                        {submission.event.description && (
+                          <p className="text-xs text-gray-400 mt-0.5">{submission.event.description}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -423,17 +451,11 @@ export default function Home() {
                         }
                       </div>
                     </div>
-                    {submission.event.unitType.value !== "time" && submission.unit && (
-                      <div className="text-right">
-                        <div className="text-sm font-medium text-gray-900">{submission.unit.label}</div>
-                        <div className="text-xs text-gray-500">Unit</div>
-                      </div>
-                    )}
                   </div>
                   {/* Reaction icons row */}
                   <div className="flex items-center gap-8 mt-4 text-gray-500">
                     <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
-                      <FiChevronUp className="w-5 h-5" />
+                      <FiThumbsUp className="w-5 h-5" />
                       <span className="text-sm font-medium">Like</span>
                     </button>
                     <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
