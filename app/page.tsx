@@ -4,6 +4,8 @@ import TimePicker from 'react-time-picker';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import { FiThumbsUp, FiMessageCircle, FiShare } from 'react-icons/fi';
+import { GiJumpingRope, GiSprint, GiStairsGoal, GiWeightLiftingUp, GiPathDistance } from 'react-icons/gi';
+import { FaDumbbell, FaRunning, FaBolt, FaHeartbeat, FaRoad } from 'react-icons/fa';
 import type { User, Event, Unit, UnitType, Domain, Submission } from './model/types';
 import { DataService } from './model/data/access/service';
 
@@ -54,6 +56,15 @@ function formatTimeValue(seconds: number): string {
 }
 
 const CURRENT_USER_ID = 'o5NeITfIMwSQhhyV28HQ';
+
+const domainIcons = {
+  'agility-coordination': GiJumpingRope,
+  'anaerobic-power-speed': GiSprint,
+  'muscular-endurance': GiStairsGoal,
+  'muscular-strength': GiWeightLiftingUp,
+  'olympic-lifting': GiWeightLiftingUp,
+  'steady-state-endurance': GiPathDistance,
+};
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -410,6 +421,7 @@ export default function Home() {
               } else {
                 console.log('No user data found, using default "Unknown User"');
               }
+              const DomainIcon = domainIcons[submission.event.domain.value] || FaDumbbell;
               return (
                 <div key={submission.id} className="bg-white rounded-lg shadow-sm p-6">
                   {/* User name and date row */}
@@ -424,20 +436,16 @@ export default function Home() {
                   </div>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FiThumbsUp className="w-5 h-5" />
-                      </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{submission.event.label}</h3>
-                        <p className="text-sm text-gray-500">{submission.event.domain.label}</p>
                         {submission.event.description && (
                           <p className="text-xs text-gray-400 mt-0.5">{submission.event.description}</p>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
+                  <div className="flex items-center gap-4 justify-between">
+                    <div>
                       <div className="text-2xl font-bold text-gray-900">
                         {submission.event.unitType.value === "time" 
                           ? formatTimeValue(submission.value)
@@ -450,6 +458,10 @@ export default function Home() {
                           : submission.unit ? submission.unit.label : "Units"
                         }
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-right flex-1 justify-end items-end">
+                      <DomainIcon className="w-5 h-5 text-blue-400" />
+                      <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">{submission.event.domain.label}</span>
                     </div>
                   </div>
                   {/* Reaction icons row */}
