@@ -421,7 +421,7 @@ export default function Home() {
               } else {
                 console.log('No user data found, using default "Unknown User"');
               }
-              const DomainIcon = domainIcons[submission.event.domain.value] || FaDumbbell;
+              const DomainIcon = domainIcons[submission.event.domain.value as keyof typeof domainIcons] || FaDumbbell;
               return (
                 <div key={submission.id} className="bg-white rounded-lg shadow-sm p-6">
                   {/* User name and date row */}
