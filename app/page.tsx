@@ -386,48 +386,63 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            submissions.map((submission) => (
-              <div key={submission.id} className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{submission.event.label}</h3>
-                      <p className="text-sm text-gray-500">{submission.event.domain.label}</p>
+            submissions.map((submission) => {
+              console.log('submission.user', submission.user);
+              let userName = 'Unknown User';
+              if (submission.user) {
+                if (typeof submission.user === 'string') {
+                  userName = submission.user;
+                } else if (submission.user.firstName || submission.user.lastName) {
+                  userName = `${submission.user.firstName || ''} ${submission.user.lastName || ''}`.trim();
+                } else if (submission.user.email) {
+                  userName = submission.user.email;
+                }
+              }
+              return (
+                <div key={submission.id} className="bg-white rounded-lg shadow-sm p-6">
+                  {/* User name and date row */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-gray-900">{userName}</span>
+                    <span className="text-sm text-gray-500">{formatDate(submission.createdAt)}</span>
+                  </div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{submission.event.label}</h3>
+                        <p className="text-sm text-gray-500">{submission.event.domain.label}</p>
+                      </div>
                     </div>
                   </div>
-                  <span className="text-sm text-gray-500">{formatDate(submission.createdAt)}</span>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {submission.event.unitType.value === "time" 
-                        ? formatTimeValue(submission.value)
-                        : submission.rawValue
-                      }
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <div className="text-2xl font-bold text-gray-900">
+                        {submission.event.unitType.value === "time" 
+                          ? formatTimeValue(submission.value)
+                          : submission.rawValue
+                        }
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {submission.event.unitType.value === "time" 
+                          ? "Time"
+                          : submission.unit ? submission.unit.label : "Units"
+                        }
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      {submission.event.unitType.value === "time" 
-                        ? "Time"
-                        : submission.unit ? submission.unit.label : "Units"
-                      }
-                    </div>
+                    {submission.event.unitType.value !== "time" && submission.unit && (
+                      <div className="text-right">
+                        <div className="text-sm font-medium text-gray-900">{submission.unit.label}</div>
+                        <div className="text-xs text-gray-500">Unit</div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {submission.event.unitType.value !== "time" && submission.unit && (
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-gray-900">{submission.unit.label}</div>
-                      <div className="text-xs text-gray-500">Unit</div>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
