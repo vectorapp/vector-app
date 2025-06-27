@@ -228,10 +228,8 @@ function useDomainDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllDomains();
-      console.log('[DataService] Fetched domains:', data);
       setDomains(data);
     } catch (err) {
-      console.error('[DataService] Error fetching domains:', err);
       setDomains([]);
     }
     setLoading(false);
@@ -246,20 +244,16 @@ function useDomainDataService() {
         value: data.value
       };
       const result = await DataService.createDomain(domainData);
-      console.log('[DataService] Added domain:', result);
       fetchDomains();
     } catch (err) {
-      console.error('[DataService] Error adding domain:', err);
     }
   }
 
   async function removeDomain(id: string) {
     try {
       await DataService.deleteDomain(id);
-      console.log('[DataService] Deleted domain:', id);
       fetchDomains();
     } catch (err) {
-      console.error('[DataService] Error deleting domain:', err);
     }
   }
 
@@ -270,10 +264,8 @@ function useDomainDataService() {
         value: data.value
       };
       const result = await DataService.updateDomain(id, domainData);
-      console.log('[DataService] Updated domain:', result);
       fetchDomains();
     } catch (err) {
-      console.error('[DataService] Error updating domain:', err);
     }
   }
 
@@ -299,10 +291,8 @@ function useGenderDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllGenders();
-      console.log('[DataService] Fetched genders:', data);
       setGenders(data);
     } catch (err) {
-      console.error('[DataService] Error fetching genders:', err);
       setGenders([]);
     }
     setLoading(false);
@@ -317,20 +307,16 @@ function useGenderDataService() {
         label: data.label
       };
       const result = await DataService.createGender(genderData);
-      console.log('[DataService] Added gender:', result);
       fetchGenders();
     } catch (err) {
-      console.error('[DataService] Error adding gender:', err);
     }
   }
 
   async function removeGender(id: string) {
     try {
       await DataService.deleteGender(id);
-      console.log('[DataService] Deleted gender:', id);
       fetchGenders();
     } catch (err) {
-      console.error('[DataService] Error deleting gender:', err);
     }
   }
 
@@ -341,10 +327,8 @@ function useGenderDataService() {
         label: data.label
       };
       const result = await DataService.updateGender(id, genderData);
-      console.log('[DataService] Updated gender:', result);
       fetchGenders();
     } catch (err) {
-      console.error('[DataService] Error updating gender:', err);
     }
   }
 
@@ -370,10 +354,8 @@ function useUserDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllUsers();
-      console.log('[DataService] Fetched users:', data);
       setUsers(data);
     } catch (err) {
-      console.error('[DataService] Error fetching users:', err);
       setUsers([]);
     }
     setLoading(false);
@@ -392,20 +374,16 @@ function useUserDataService() {
         birthday: data.birthday
       };
       const result = await DataService.createUser(userData);
-      console.log('[DataService] Added user:', result);
       fetchUsers();
     } catch (err) {
-      console.error('[DataService] Error adding user:', err);
     }
   }
 
   async function removeUser(id: string) {
     try {
       await DataService.deleteUser(id);
-      console.log('[DataService] Deleted user:', id);
       fetchUsers();
     } catch (err) {
-      console.error('[DataService] Error deleting user:', err);
     }
   }
 
@@ -420,10 +398,8 @@ function useUserDataService() {
         birthday: data.birthday
       };
       const result = await DataService.updateUser(id, userData);
-      console.log('[DataService] Updated user:', result);
       fetchUsers();
     } catch (err) {
-      console.error('[DataService] Error updating user:', err);
     }
   }
 
@@ -452,10 +428,8 @@ function useUnitDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllUnits();
-      console.log('[DataService] Fetched units:', data);
       setUnits(data);
     } catch (err) {
-      console.error('[DataService] Error fetching units:', err);
       setUnits([]);
     }
     setLoading(false);
@@ -470,20 +444,16 @@ function useUnitDataService() {
         value: data.value
       };
       const result = await DataService.createUnit(unitData);
-      console.log('[DataService] Added unit:', result);
       fetchUnits();
     } catch (err) {
-      console.error('[DataService] Error adding unit:', err);
     }
   }
 
   async function removeUnit(id: string) {
     try {
       await DataService.deleteUnit(id);
-      console.log('[DataService] Deleted unit:', id);
       fetchUnits();
     } catch (err) {
-      console.error('[DataService] Error deleting unit:', err);
     }
   }
 
@@ -494,10 +464,8 @@ function useUnitDataService() {
         value: data.value
       };
       const result = await DataService.updateUnit(id, unitData);
-      console.log('[DataService] Updated unit:', result);
       fetchUnits();
     } catch (err) {
-      console.error('[DataService] Error updating unit:', err);
     }
   }
 
@@ -523,10 +491,8 @@ function useUnitTypeDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllUnitTypes();
-      console.log('[DataService] Fetched unitTypes:', data);
       setUnitTypes(data);
     } catch (err) {
-      console.error('[DataService] Error fetching unitTypes:', err);
       setUnitTypes([]);
     }
     setLoading(false);
@@ -545,20 +511,16 @@ function useUnitTypeDataService() {
         })) : []
       };
       const result = await DataService.createUnitType(unitTypeData);
-      console.log('[DataService] Added unitType:', result);
       fetchUnitTypes();
     } catch (err) {
-      console.error('[DataService] Error adding unitType:', err);
     }
   }
 
   async function removeUnitType(id: string) {
     try {
       await DataService.deleteUnitType(id);
-      console.log('[DataService] Deleted unitType:', id);
       fetchUnitTypes();
     } catch (err) {
-      console.error('[DataService] Error deleting unitType:', err);
     }
   }
 
@@ -573,10 +535,8 @@ function useUnitTypeDataService() {
         })) : []
       };
       const result = await DataService.updateUnitType(id, unitTypeData);
-      console.log('[DataService] Updated unitType:', result);
       fetchUnitTypes();
     } catch (err) {
-      console.error('[DataService] Error updating unitType:', err);
     }
   }
 
@@ -603,10 +563,8 @@ function useAgeGroupDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllAgeGroups();
-      console.log('[DataService] Fetched ageGroups:', data);
       setAgeGroups(data);
     } catch (err) {
-      console.error('[DataService] Error fetching ageGroups:', err);
       setAgeGroups([]);
     }
     setLoading(false);
@@ -621,20 +579,16 @@ function useAgeGroupDataService() {
         upperBound: Number(data.upperBound)
       };
       const result = await DataService.createAgeGroup(ageGroupData);
-      console.log('[DataService] Added ageGroup:', result);
       fetchAgeGroups();
     } catch (err) {
-      console.error('[DataService] Error adding ageGroup:', err);
     }
   }
 
   async function removeAgeGroup(id: string) {
     try {
       await DataService.deleteAgeGroup(id);
-      console.log('[DataService] Deleted ageGroup:', id);
       fetchAgeGroups();
     } catch (err) {
-      console.error('[DataService] Error deleting ageGroup:', err);
     }
   }
 
@@ -645,10 +599,8 @@ function useAgeGroupDataService() {
         upperBound: Number(data.upperBound)
       };
       const result = await DataService.updateAgeGroup(id, ageGroupData);
-      console.log('[DataService] Updated ageGroup:', result);
       fetchAgeGroups();
     } catch (err) {
-      console.error('[DataService] Error updating ageGroup:', err);
     }
   }
 
@@ -674,10 +626,8 @@ function useEventDataService() {
     setLoading(true);
     try {
       const data = await DataService.getAllEvents();
-      console.log('[DataService] Fetched events:', data);
       setEvents(data);
     } catch (err) {
-      console.error('[DataService] Error fetching events:', err);
       setEvents([]);
     }
     setLoading(false);
@@ -695,20 +645,16 @@ function useEventDataService() {
         description: data.description
       };
       const result = await DataService.createEvent(eventData);
-      console.log('[DataService] Added event:', result);
       fetchEvents();
     } catch (err) {
-      console.error('[DataService] Error adding event:', err);
     }
   }
 
   async function removeEvent(id: string) {
     try {
       await DataService.deleteEvent(id);
-      console.log('[DataService] Deleted event:', id);
       fetchEvents();
     } catch (err) {
-      console.error('[DataService] Error deleting event:', err);
     }
   }
 
@@ -722,10 +668,8 @@ function useEventDataService() {
         description: data.description
       };
       const result = await DataService.updateEvent(id, eventData);
-      console.log('[DataService] Updated event:', result);
       fetchEvents();
     } catch (err) {
-      console.error('[DataService] Error updating event:', err);
     }
   }
 
@@ -761,10 +705,8 @@ export default function AdminPage() {
     async function fetchUser() {
       try {
         const user = await DataService.getUserById(ADMIN_USER_ID);
-        console.log('[DataService] Fetched current user:', user);
         setCurrentUser(user);
       } catch (err) {
-        console.error('[DataService] Error fetching current user:', err);
         setCurrentUser(null);
       }
     }

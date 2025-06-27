@@ -63,10 +63,8 @@ abstract class BaseFirestoreDao<T, TDto> {
     
     for (const doc of querySnapshot.docs) {
       const rawData = doc.data();
-      console.log('[DataService] Raw Firestore data for user:', doc.id, rawData);
       
       const dto = { id: doc.id, ...rawData } as TDto;
-      console.log('[DataService] Created DTO from raw data:', dto);
       
       const entity = await this.dtoToEntity(dto);
       entities.push(entity);
@@ -108,16 +106,10 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
   }
 
   protected async dtoToEntity(dto: UserDto): Promise<User> {
-    console.log('[DataService] dtoToEntity called with DTO:', dto);
-    console.log('[DataService] DTO gender field:', dto.gender);
-    console.log('[DataService] DTO gender field type:', typeof dto.gender);
-    
     // Fetch the gender object
     let gender = undefined;
     
     if (dto.gender) {
-      console.log('[DataService] Looking for gender with value:', dto.gender);
-      
       // Find gender document by matching the value field
       const gendersSnapshot = await getDocs(collection(db, 'genders'));
       const genderDoc = gendersSnapshot.docs.find(doc => {
@@ -125,26 +117,16 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
         return data.value === dto.gender;
       });
       
-      console.log('[DataService] Found gender document:', genderDoc ? { id: genderDoc.id, data: genderDoc.data() } : null);
-      
       if (genderDoc) {
         const genderData = genderDoc.data() as GenderDto;
-        console.log('[DataService] Gender data:', genderData);
         
         if (genderData && genderData.value && genderData.label) {
           gender = {
             value: genderData.value,
             label: genderData.label
           };
-          console.log('[DataService] Created gender object:', gender);
-        } else {
-          console.log('[DataService] Gender data incomplete or missing');
         }
-      } else {
-        console.log('[DataService] No gender document found with value:', dto.gender);
       }
-    } else {
-      console.log('[DataService] No gender field in DTO');
     }
 
     const result = {
@@ -157,7 +139,6 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
       birthday: dto.birthday || ''
     };
     
-    console.log('[DataService] Final User object:', result);
     return result;
   }
 
@@ -176,8 +157,6 @@ export class FirestoreGenderDao {
   private collectionName = 'genders';
 
   async create(gender: Omit<Gender, 'id'>): Promise<Gender> {
-    console.log('[GenderDao] Creating gender:', gender);
-    
     const genderDto: Omit<GenderDto, 'id' | 'createdAt'> = {
       value: gender.value,
       label: gender.label
@@ -188,8 +167,6 @@ export class FirestoreGenderDao {
       createdAt: new Date()
     });
 
-    console.log('[GenderDao] Created gender with ID:', docRef.id);
-    
     return {
       id: docRef.id,
       value: gender.value,
@@ -198,18 +175,14 @@ export class FirestoreGenderDao {
   }
 
   async findById(id: string): Promise<Gender | null> {
-    console.log('[GenderDao] Finding gender by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.log('[GenderDao] Gender not found for ID:', id);
       return null;
     }
 
     const data = docSnap.data() as GenderDto;
-    console.log('[GenderDao] Found gender:', { id, ...data });
 
     return {
       id: docSnap.id,
@@ -219,8 +192,6 @@ export class FirestoreGenderDao {
   }
 
   async findByValue(value: string): Promise<Gender | null> {
-    console.log('[GenderDao] Finding gender by value:', value);
-    
     const q = query(
       collection(db, this.collectionName),
       where('value', '==', value)
@@ -229,13 +200,11 @@ export class FirestoreGenderDao {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      console.log('[GenderDao] No gender found for value:', value);
       return null;
     }
 
     const doc = querySnapshot.docs[0];
     const data = doc.data() as GenderDto;
-    console.log('[GenderDao] Found gender by value:', { id: doc.id, ...data });
 
     return {
       id: doc.id,
@@ -245,8 +214,6 @@ export class FirestoreGenderDao {
   }
 
   async findAll(): Promise<Gender[]> {
-    console.log('[GenderDao] Finding all genders');
-    
     const q = query(collection(db, this.collectionName), orderBy('label'));
     const querySnapshot = await getDocs(q);
     
@@ -260,13 +227,10 @@ export class FirestoreGenderDao {
       });
     });
 
-    console.log('[GenderDao] Found', genders.length, 'genders');
     return genders;
   }
 
   async update(id: string, gender: Partial<Omit<Gender, 'id'>>): Promise<Gender> {
-    console.log('[GenderDao] Updating gender:', id, gender);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<GenderDto> = {};
     
@@ -274,7 +238,6 @@ export class FirestoreGenderDao {
     if (gender.label !== undefined) updateData.label = gender.label;
 
     await updateDoc(docRef, updateData);
-    console.log('[GenderDao] Updated gender:', id);
 
     // Return the updated gender
     const updated = await this.findById(id);
@@ -285,11 +248,8 @@ export class FirestoreGenderDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[GenderDao] Deleting gender:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[GenderDao] Deleted gender:', id);
   }
 }
 
@@ -297,8 +257,6 @@ export class FirestoreDomainDao {
   private collectionName = 'domains';
 
   async create(domain: Omit<Domain, 'id'>): Promise<Domain> {
-    console.log('[DomainDao] Creating domain:', domain);
-    
     const domainDto: Omit<DomainDto, 'id' | 'createdAt'> = {
       label: domain.label,
       value: domain.value
@@ -309,8 +267,6 @@ export class FirestoreDomainDao {
       createdAt: new Date()
     });
 
-    console.log('[DomainDao] Created domain with ID:', docRef.id);
-    
     return {
       id: docRef.id,
       label: domain.label,
@@ -319,18 +275,14 @@ export class FirestoreDomainDao {
   }
 
   async findById(id: string): Promise<Domain | null> {
-    console.log('[DomainDao] Finding domain by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.log('[DomainDao] Domain not found for ID:', id);
       return null;
     }
 
     const data = docSnap.data() as DomainDto;
-    console.log('[DomainDao] Found domain:', { id, ...data });
 
     return {
       id: docSnap.id,
@@ -340,8 +292,6 @@ export class FirestoreDomainDao {
   }
 
   async findByValue(value: string): Promise<Domain | null> {
-    console.log('[DomainDao] Finding domain by value:', value);
-    
     const q = query(
       collection(db, this.collectionName),
       where('value', '==', value)
@@ -350,13 +300,11 @@ export class FirestoreDomainDao {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      console.log('[DomainDao] No domain found for value:', value);
       return null;
     }
 
     const doc = querySnapshot.docs[0];
     const data = doc.data() as DomainDto;
-    console.log('[DomainDao] Found domain by value:', { id: doc.id, ...data });
 
     return {
       id: doc.id,
@@ -366,8 +314,6 @@ export class FirestoreDomainDao {
   }
 
   async findAll(): Promise<Domain[]> {
-    console.log('[DomainDao] Finding all domains');
-    
     const q = query(collection(db, this.collectionName), orderBy('label'));
     const querySnapshot = await getDocs(q);
     
@@ -381,13 +327,10 @@ export class FirestoreDomainDao {
       });
     });
 
-    console.log('[DomainDao] Found', domains.length, 'domains');
     return domains;
   }
 
   async update(id: string, domain: Partial<Omit<Domain, 'id'>>): Promise<Domain> {
-    console.log('[DomainDao] Updating domain:', id, domain);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<DomainDto> = {};
     
@@ -395,7 +338,6 @@ export class FirestoreDomainDao {
     if (domain.value !== undefined) updateData.value = domain.value;
 
     await updateDoc(docRef, updateData);
-    console.log('[DomainDao] Updated domain:', id);
 
     // Return the updated domain
     const updated = await this.findById(id);
@@ -406,11 +348,8 @@ export class FirestoreDomainDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[DomainDao] Deleting domain:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[DomainDao] Deleted domain:', id);
   }
 }
 
@@ -418,8 +357,6 @@ export class FirestoreUnitTypeDao {
   private collectionName = 'unitTypes';
 
   async create(unitType: Omit<UnitType, 'id'>): Promise<UnitType> {
-    console.log('[UnitTypeDao] Creating unitType:', unitType);
-    
     const unitTypeDto: Omit<UnitTypeDto, 'id' | 'createdAt'> = {
       label: unitType.label,
       value: unitType.value,
@@ -431,8 +368,6 @@ export class FirestoreUnitTypeDao {
       createdAt: new Date()
     });
 
-    console.log('[UnitTypeDao] Created unitType with ID:', docRef.id);
-    
     return {
       id: docRef.id,
       label: unitType.label,
@@ -442,18 +377,14 @@ export class FirestoreUnitTypeDao {
   }
 
   async findById(id: string): Promise<UnitType | null> {
-    console.log('[UnitTypeDao] Finding unitType by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.log('[UnitTypeDao] UnitType not found for ID:', id);
       return null;
     }
 
     const data = docSnap.data() as UnitTypeDto;
-    console.log('[UnitTypeDao] Found unitType:', { id, ...data });
 
     // Convert units array back to Unit objects
     const units = data.units?.map(unitValue => ({
@@ -470,8 +401,6 @@ export class FirestoreUnitTypeDao {
   }
 
   async findByValue(value: string): Promise<UnitType | null> {
-    console.log('[UnitTypeDao] Finding unitType by value:', value);
-    
     const q = query(
       collection(db, this.collectionName),
       where('value', '==', value)
@@ -480,13 +409,11 @@ export class FirestoreUnitTypeDao {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      console.log('[UnitTypeDao] No unitType found for value:', value);
       return null;
     }
 
     const doc = querySnapshot.docs[0];
     const data = doc.data() as UnitTypeDto;
-    console.log('[UnitTypeDao] Found unitType by value:', { id: doc.id, ...data });
 
     // Convert units array back to Unit objects
     const units = data.units?.map(unitValue => ({
@@ -503,8 +430,6 @@ export class FirestoreUnitTypeDao {
   }
 
   async findAll(): Promise<UnitType[]> {
-    console.log('[UnitTypeDao] Finding all unitTypes');
-    
     const q = query(collection(db, this.collectionName), orderBy('label'));
     const querySnapshot = await getDocs(q);
     
@@ -526,13 +451,10 @@ export class FirestoreUnitTypeDao {
       });
     });
 
-    console.log('[UnitTypeDao] Found', unitTypes.length, 'unitTypes');
     return unitTypes;
   }
 
   async update(id: string, unitType: Partial<Omit<UnitType, 'id'>>): Promise<UnitType> {
-    console.log('[UnitTypeDao] Updating unitType:', id, unitType);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<UnitTypeDto> = {};
     
@@ -543,7 +465,6 @@ export class FirestoreUnitTypeDao {
     }
 
     await updateDoc(docRef, updateData);
-    console.log('[UnitTypeDao] Updated unitType:', id);
 
     // Return the updated unitType
     const updated = await this.findById(id);
@@ -554,11 +475,8 @@ export class FirestoreUnitTypeDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[UnitTypeDao] Deleting unitType:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[UnitTypeDao] Deleted unitType:', id);
   }
 }
 
@@ -566,8 +484,6 @@ export class FirestoreUnitDao {
   private collectionName = 'units';
 
   async create(unit: Omit<Unit, 'id'>): Promise<Unit> {
-    console.log('[UnitDao] Creating unit:', unit);
-    
     const unitDto: Omit<UnitDto, 'id' | 'createdAt'> = {
       label: unit.label,
       value: unit.value
@@ -578,8 +494,6 @@ export class FirestoreUnitDao {
       createdAt: new Date()
     });
 
-    console.log('[UnitDao] Created unit with ID:', docRef.id);
-    
     return {
       id: docRef.id,
       label: unit.label,
@@ -588,18 +502,14 @@ export class FirestoreUnitDao {
   }
 
   async findById(id: string): Promise<Unit | null> {
-    console.log('[UnitDao] Finding unit by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.log('[UnitDao] Unit not found for ID:', id);
       return null;
     }
 
     const data = docSnap.data() as UnitDto;
-    console.log('[UnitDao] Found unit:', { id, ...data });
 
     return {
       id: docSnap.id,
@@ -609,8 +519,6 @@ export class FirestoreUnitDao {
   }
 
   async findByValue(value: string): Promise<Unit | null> {
-    console.log('[UnitDao] Finding unit by value:', value);
-    
     const q = query(
       collection(db, this.collectionName),
       where('value', '==', value)
@@ -619,13 +527,11 @@ export class FirestoreUnitDao {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      console.log('[UnitDao] No unit found for value:', value);
       return null;
     }
 
     const doc = querySnapshot.docs[0];
     const data = doc.data() as UnitDto;
-    console.log('[UnitDao] Found unit by value:', { id: doc.id, ...data });
 
     return {
       id: doc.id,
@@ -635,8 +541,6 @@ export class FirestoreUnitDao {
   }
 
   async findAll(): Promise<Unit[]> {
-    console.log('[UnitDao] Finding all units');
-    
     const q = query(collection(db, this.collectionName), orderBy('label'));
     const querySnapshot = await getDocs(q);
     
@@ -650,13 +554,10 @@ export class FirestoreUnitDao {
       });
     });
 
-    console.log('[UnitDao] Found', units.length, 'units');
     return units;
   }
 
   async update(id: string, unit: Partial<Omit<Unit, 'id'>>): Promise<Unit> {
-    console.log('[UnitDao] Updating unit:', id, unit);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<UnitDto> = {};
     
@@ -664,7 +565,6 @@ export class FirestoreUnitDao {
     if (unit.value !== undefined) updateData.value = unit.value;
 
     await updateDoc(docRef, updateData);
-    console.log('[UnitDao] Updated unit:', id);
 
     // Return the updated unit
     const updated = await this.findById(id);
@@ -675,11 +575,8 @@ export class FirestoreUnitDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[UnitDao] Deleting unit:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[UnitDao] Deleted unit:', id);
   }
 }
 
@@ -687,8 +584,6 @@ export class FirestoreAgeGroupDao {
   private collectionName = 'ageGroups';
 
   async create(ageGroup: Omit<AgeGroup, 'id'>): Promise<AgeGroup> {
-    console.log('[AgeGroupDao] Creating ageGroup:', ageGroup);
-    
     const ageGroupDto: Omit<AgeGroupDto, 'id' | 'createdAt'> = {
       lowerBound: ageGroup.lowerBound,
       upperBound: ageGroup.upperBound
@@ -699,8 +594,6 @@ export class FirestoreAgeGroupDao {
       createdAt: new Date()
     });
 
-    console.log('[AgeGroupDao] Created ageGroup with ID:', docRef.id);
-    
     return {
       id: docRef.id,
       lowerBound: ageGroup.lowerBound,
@@ -709,18 +602,14 @@ export class FirestoreAgeGroupDao {
   }
 
   async findById(id: string): Promise<AgeGroup | null> {
-    console.log('[AgeGroupDao] Finding ageGroup by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.log('[AgeGroupDao] AgeGroup not found for ID:', id);
       return null;
     }
 
     const data = docSnap.data() as AgeGroupDto;
-    console.log('[AgeGroupDao] Found ageGroup:', { id, ...data });
 
     return {
       id: docSnap.id,
@@ -730,8 +619,6 @@ export class FirestoreAgeGroupDao {
   }
 
   async findByBounds(lowerBound: number, upperBound: number): Promise<AgeGroup | null> {
-    console.log('[AgeGroupDao] Finding ageGroup by bounds:', lowerBound, upperBound);
-    
     const q = query(
       collection(db, this.collectionName),
       where('lowerBound', '==', lowerBound),
@@ -741,13 +628,11 @@ export class FirestoreAgeGroupDao {
     const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
-      console.log('[AgeGroupDao] No ageGroup found for bounds:', lowerBound, upperBound);
       return null;
     }
 
     const doc = querySnapshot.docs[0];
     const data = doc.data() as AgeGroupDto;
-    console.log('[AgeGroupDao] Found ageGroup by bounds:', { id: doc.id, ...data });
 
     return {
       id: doc.id,
@@ -757,8 +642,6 @@ export class FirestoreAgeGroupDao {
   }
 
   async findAll(): Promise<AgeGroup[]> {
-    console.log('[AgeGroupDao] Finding all ageGroups');
-    
     const q = query(collection(db, this.collectionName), orderBy('lowerBound', 'asc'));
     const querySnapshot = await getDocs(q);
     
@@ -772,13 +655,10 @@ export class FirestoreAgeGroupDao {
       });
     });
 
-    console.log('[AgeGroupDao] Found', ageGroups.length, 'ageGroups');
     return ageGroups;
   }
 
   async update(id: string, ageGroup: Partial<Omit<AgeGroup, 'id'>>): Promise<AgeGroup> {
-    console.log('[AgeGroupDao] Updating ageGroup:', id, ageGroup);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<AgeGroupDto> = {};
     
@@ -786,7 +666,6 @@ export class FirestoreAgeGroupDao {
     if (ageGroup.upperBound !== undefined) updateData.upperBound = ageGroup.upperBound;
 
     await updateDoc(docRef, updateData);
-    console.log('[AgeGroupDao] Updated ageGroup:', id);
 
     // Return the updated ageGroup
     const updated = await this.findById(id);
@@ -797,11 +676,8 @@ export class FirestoreAgeGroupDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[AgeGroupDao] Deleting ageGroup:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[AgeGroupDao] Deleted ageGroup:', id);
   }
 }
 
@@ -809,7 +685,6 @@ export class FirestoreEventDao {
   private collectionName = 'events';
 
   async create(event: Omit<Event, 'id'>): Promise<Event> {
-    console.log('[EventDao] Creating event:', event);
     // Save only the string value for unitType and domain
     const eventDto: Omit<EventDto, 'id' | 'createdAt'> = {
       label: event.label,
@@ -824,7 +699,6 @@ export class FirestoreEventDao {
       createdAt: new Date()
     });
 
-    console.log('[EventDao] Created event with ID:', docRef.id);
     // Return the event with string IDs for unitType and domain (to be hydrated by DataService)
     return {
       id: docRef.id,
@@ -837,15 +711,12 @@ export class FirestoreEventDao {
   }
 
   async findById(id: string): Promise<Event | null> {
-    console.log('[EventDao] Finding event by ID:', id);
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) {
-      console.log('[EventDao] Event not found for ID:', id);
       return null;
     }
     const data = docSnap.data() as EventDto;
-    console.log('[EventDao] Found event:', { id, ...data });
     // Return the event with string IDs for unitType and domain (to be hydrated by DataService)
     return {
       id: docSnap.id,
@@ -858,19 +729,16 @@ export class FirestoreEventDao {
   }
 
   async findByValue(value: string): Promise<Event | null> {
-    console.log('[EventDao] Finding event by value:', value);
     const q = query(
       collection(db, this.collectionName),
       where('value', '==', value)
     );
     const querySnapshot = await getDocs(q);
     if (querySnapshot.empty) {
-      console.log('[EventDao] No event found for value:', value);
       return null;
     }
     const doc = querySnapshot.docs[0];
     const data = doc.data() as EventDto;
-    console.log('[EventDao] Found event by value:', { id: doc.id, ...data });
     return {
       id: doc.id,
       label: data.label || '',
@@ -882,7 +750,6 @@ export class FirestoreEventDao {
   }
 
   async findByDomain(domain: string): Promise<Event[]> {
-    console.log('[EventDao] Finding events by domain:', domain);
     const q = query(
       collection(db, this.collectionName),
       where('domain', '==', domain),
@@ -901,12 +768,10 @@ export class FirestoreEventDao {
         description: data.description
       } as unknown as Event);
     });
-    console.log('[EventDao] Found', events.length, 'events for domain:', domain);
     return events;
   }
 
   async findAll(): Promise<Event[]> {
-    console.log('[EventDao] Finding all events');
     const q = query(collection(db, this.collectionName), orderBy('domain'), orderBy('label'));
     const querySnapshot = await getDocs(q);
     const events: Event[] = [];
@@ -921,12 +786,10 @@ export class FirestoreEventDao {
         description: data.description
       } as unknown as Event);
     });
-    console.log('[EventDao] Found', events.length, 'events');
     return events;
   }
 
   async update(id: string, event: Partial<Omit<Event, 'id'>>): Promise<Event> {
-    console.log('[EventDao] Updating event:', id, event);
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<EventDto> = {};
     if (event.label !== undefined) updateData.label = event.label;
@@ -935,7 +798,6 @@ export class FirestoreEventDao {
     if (event.domain !== undefined) updateData.domain = typeof event.domain === 'string' ? event.domain : event.domain.value;
     if (event.description !== undefined) updateData.description = event.description;
     await updateDoc(docRef, updateData);
-    console.log('[EventDao] Updated event:', id);
     // Return the updated event with string IDs for unitType and domain
     const updated = await this.findById(id);
     if (!updated) {
@@ -945,11 +807,8 @@ export class FirestoreEventDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[EventDao] Deleting event:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[EventDao] Deleted event:', id);
   }
 }
 
@@ -957,8 +816,6 @@ export class FirestoreSubmissionDao {
   private collectionName = 'submissions';
 
   async create(submission: Omit<Submission, 'id'>): Promise<Submission> {
-    console.log('[SubmissionDao] Creating submission:', submission);
-    
     // Extract string IDs from full objects for DTO
     const submissionDto: Omit<SubmissionDto, 'id' | 'createdAt'> = {
       userId: submission.user.id || submission.user.email,
@@ -972,8 +829,6 @@ export class FirestoreSubmissionDao {
       createdAt: new Date()
     });
 
-    console.log('[SubmissionDao] Created submission with ID:', docRef.id);
-    
     // Return with string IDs (to be hydrated by DataService)
     return {
       id: docRef.id,
@@ -987,19 +842,14 @@ export class FirestoreSubmissionDao {
   }
 
   async findById(id: string): Promise<Submission | null> {
-    console.log('[SubmissionDao] Finding submission by ID:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
-      console.log('[SubmissionDao] Submission not found for ID:', id);
       return null;
     }
 
     const data = docSnap.data() as SubmissionDto;
-    console.log('[SubmissionDao] Found submission:', { id, ...data });
-
     // Return with string IDs (to be hydrated by DataService)
     return {
       id: docSnap.id,
@@ -1013,8 +863,6 @@ export class FirestoreSubmissionDao {
   }
 
   async findByUserId(userId: string): Promise<Submission[]> {
-    console.log('[SubmissionDao] Finding submissions by userId:', userId);
-    
     const q = query(
       collection(db, this.collectionName),
       where('userId', '==', userId),
@@ -1037,13 +885,10 @@ export class FirestoreSubmissionDao {
       } as unknown as Submission);
     });
 
-    console.log('[SubmissionDao] Found', submissions.length, 'submissions for userId:', userId);
     return submissions;
   }
 
   async findByEvent(event: string): Promise<Submission[]> {
-    console.log('[SubmissionDao] Finding submissions by event:', event);
-    
     const q = query(
       collection(db, this.collectionName),
       where('event', '==', event),
@@ -1066,13 +911,10 @@ export class FirestoreSubmissionDao {
       } as unknown as Submission);
     });
 
-    console.log('[SubmissionDao] Found', submissions.length, 'submissions for event:', event);
     return submissions;
   }
 
   async findAll(): Promise<Submission[]> {
-    console.log('[SubmissionDao] Finding all submissions');
-    
     const q = query(collection(db, this.collectionName), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
     
@@ -1090,13 +932,10 @@ export class FirestoreSubmissionDao {
       } as unknown as Submission);
     });
 
-    console.log('[SubmissionDao] Found', submissions.length, 'submissions');
     return submissions;
   }
 
   async update(id: string, submission: Partial<Omit<Submission, 'id'>>): Promise<Submission> {
-    console.log('[SubmissionDao] Updating submission:', id, submission);
-    
     const docRef = doc(db, this.collectionName, id);
     const updateData: Partial<SubmissionDto> = {};
     
@@ -1112,7 +951,6 @@ export class FirestoreSubmissionDao {
     }
 
     await updateDoc(docRef, updateData);
-    console.log('[SubmissionDao] Updated submission:', id);
 
     // Return the updated submission with string IDs
     const updated = await this.findById(id);
@@ -1123,10 +961,7 @@ export class FirestoreSubmissionDao {
   }
 
   async delete(id: string): Promise<void> {
-    console.log('[SubmissionDao] Deleting submission:', id);
-    
     const docRef = doc(db, this.collectionName, id);
     await deleteDoc(docRef);
-    console.log('[SubmissionDao] Deleted submission:', id);
   }
 } 

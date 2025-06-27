@@ -388,38 +388,19 @@ export default function Home() {
             </div>
           ) : (
             submissions.map((submission) => {
-              console.log('=== SUBMISSION MAPPING DEBUG ===');
-              console.log('submission.id:', submission.id);
-              console.log('submission.user:', submission.user);
-              console.log('submission.event:', submission.event);
-              console.log('submission.value:', submission.value);
-              console.log('submission.rawValue:', submission.rawValue);
-              console.log('submission.unit:', submission.unit);
-              console.log('submission.createdAt:', submission.createdAt);
-              console.log('submission.event.unitType:', submission.event.unitType);
-              
-              console.log('submission.user', submission.user);
               let userName = 'Unknown User';
               let userInitials = '?';
               if (submission.user) {
-                console.log('User data exists, checking type...');
                 if (typeof submission.user === 'string') {
-                  console.log('User is string type, using as userName');
                   userName = submission.user;
                   userInitials = userName.charAt(0).toUpperCase();
                 } else if (submission.user.firstName || submission.user.lastName) {
-                  console.log('User has firstName/lastName, combining them');
                   userName = `${submission.user.firstName || ''} ${submission.user.lastName || ''}`.trim();
                   userInitials = `${submission.user.firstName?.charAt(0) || ''}${submission.user.lastName?.charAt(0) || ''}`.toUpperCase();
                 } else if (submission.user.email) {
-                  console.log('User has email, using as userName');
                   userName = submission.user.email;
                   userInitials = userName.charAt(0).toUpperCase();
-                } else {
-                  console.log('User object exists but no usable name fields found');
                 }
-              } else {
-                console.log('No user data found, using default "Unknown User"');
               }
               const DomainIcon = domainIcons[submission.event.domain.value as keyof typeof domainIcons] || FaDumbbell;
               return (
