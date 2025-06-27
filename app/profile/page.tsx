@@ -9,9 +9,11 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../model/data/access/firebase';
 
 export default function ProfilePage() {
-  const { user, loading: userLoading } = useUser();
+  const { user, firebaseUser, loading: userLoading } = useUser();
   const router = useRouter();
-  const isAdmin = true; // TODO: Replace with real admin check
+  
+  // Check if user is admin based on Firebase UID
+  const isAdmin = firebaseUser?.uid === 'LnkelipubdcqpTrPJhWVCMyzVzg2';
 
   // Redirect to login if not authenticated
   useEffect(() => {

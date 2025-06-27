@@ -690,7 +690,7 @@ function useEventDataService() {
 }
 
 export default function AdminPage() {
-  const { user, loading: userLoading } = useUser();
+  const { user, firebaseUser, loading: userLoading } = useUser();
   const router = useRouter();
 
   // Always call hooks at the top level
@@ -721,8 +721,8 @@ export default function AdminPage() {
     return null; // Will redirect to login
   }
 
-  // TODO: Replace with real admin check based on user role or email
-  const isAdmin = true; // For now, allow all authenticated users
+  // Check if user is admin based on Firebase UID
+  const isAdmin = firebaseUser?.uid === 'LnkelipubdcqpTrPJhWVCMyzVzg2';
 
   if (!isAdmin) {
     return (
