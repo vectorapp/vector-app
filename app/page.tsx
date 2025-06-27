@@ -8,6 +8,8 @@ import { GiJumpingRope, GiSprint, GiStairsGoal, GiWeightLiftingUp, GiPathDistanc
 import { FaDumbbell, FaRunning, FaBolt, FaHeartbeat, FaRoad } from 'react-icons/fa';
 import type { User, Event, Unit, UnitType, Domain, Submission } from './model/types';
 import { DataService } from './model/data/access/service';
+import { useUser } from './model/auth/UserContext';
+import { useRouter } from 'next/navigation';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
@@ -55,8 +57,6 @@ function formatTimeValue(seconds: number): string {
   }
 }
 
-const CURRENT_USER_ID = 'o5NeITfIMwSQhhyV28HQ';
-
 const domainIcons = {
   'agility-coordination': GiJumpingRope,
   'anaerobic-power-speed': GiSprint,
@@ -67,6 +67,9 @@ const domainIcons = {
 };
 
 export default function Home() {
+  const { user, loading: userLoading } = useUser();
+  const router = useRouter();
+  
   const [events, setEvents] = useState<Event[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
@@ -83,9 +86,14 @@ export default function Home() {
   const [eventValue, setEventValue] = useState("");
   const [unit, setUnit] = useState("");
   const [timedEventValue, setTimedEventValue] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userLoading, setUserLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, userLoading, router]);
 
   // Fetch all data using DataService
   useEffect(() => {
@@ -118,30 +126,14 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Fetch current user using DataService
-  useEffect(() => {
-    async function fetchUser() {
-      setUserLoading(true);
-      try {
-        const user = await DataService.getUserById(CURRENT_USER_ID);
-        setCurrentUser(user);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-        setCurrentUser(null);
-      }
-      setUserLoading(false);
-    }
-    fetchUser();
-  }, []);
-
   // Fetch user submissions
   useEffect(() => {
     async function fetchSubmissions() {
-      if (!currentUser) return;
+      if (!user) return;
       
       setSubmissionsLoading(true);
       try {
-        const userSubmissions = await DataService.getSubmissionsByUserId(currentUser.id || currentUser.email);
+        const userSubmissions = await DataService.getSubmissionsByUserId(user.id || user.email);
         setSubmissions(userSubmissions);
       } catch (error) {
         console.error('Error fetching submissions:', error);
@@ -150,7 +142,7 @@ export default function Home() {
       setSubmissionsLoading(false);
     }
     fetchSubmissions();
-  }, [currentUser]);
+  }, [user]);
 
   // Set default event when events are loaded
   useEffect(() => {
@@ -173,7 +165,7 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser) return;
+    if (!user) return;
     
     setSubmitting(true);
     
@@ -204,7 +196,7 @@ export default function Home() {
     }
     
     const submission: Omit<Submission, 'id'> = {
-      user: currentUser,
+      user: user,
       event: currentEvent,
       rawValue: rawValue,
       value: value,
@@ -214,7 +206,7 @@ export default function Home() {
     try {
       await DataService.createSubmission(submission);
       // Refresh submissions
-      const userSubmissions = await DataService.getSubmissionsByUserId(currentUser.id || currentUser.email);
+      const userSubmissions = await DataService.getSubmissionsByUserId(user.id || user.email);
       setSubmissions(userSubmissions);
       // Reset form
       setEventValue("");
@@ -261,7 +253,7 @@ export default function Home() {
         {!showNewPostForm && (
           <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex items-center gap-3 cursor-pointer" onClick={() => setShowNewPostForm(true)}>
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center font-bold text-blue-700 text-lg">
-              {currentUser?.firstName ? currentUser.firstName[0] : (currentUser?.email ? currentUser.email[0].toUpperCase() : '?')}
+              {user?.firstName ? user.firstName[0] : (user?.email ? user.email[0].toUpperCase() : '?')}
             </div>
             <div className="flex-1 text-gray-500 text-base">
               {"What's your latest workout or achievement?"}
@@ -282,7 +274,7 @@ export default function Home() {
                   value={event}
                   onChange={handleEventChange}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  disabled={!currentUser}
+                  disabled={!user}
                 >
                   {eventsByDomain.map(group => (
                     <optgroup key={group.domain} label={group.label}>
@@ -307,7 +299,7 @@ export default function Home() {
                     clearIcon={null}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     required
-                    disabled={!currentUser}
+                    disabled={!user}
                   />
                 ) : (
                   <input
@@ -316,7 +308,7 @@ export default function Home() {
                     onChange={e => setEventValue(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     required
-                    disabled={!currentUser}
+                    disabled={!user}
                     placeholder="Enter your value"
                   />
                 )}
@@ -331,7 +323,7 @@ export default function Home() {
                     value={unit}
                     onChange={e => setUnit(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    disabled={!currentUser}
+                    disabled={!user}
                   >
                     {availableUnits.map(u => (
                       <option key={u.value} value={u.value}>{u.label}</option>
@@ -342,7 +334,7 @@ export default function Home() {
 
               <button
                 type="submit"
-                disabled={!currentUser || submitting}
+                disabled={!user || submitting}
                 className="w-full bg-green-600 text-white rounded-lg px-6 py-3 font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitting ? (

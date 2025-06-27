@@ -2,8 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../model/types';
 import { DataService } from '../model/data/access';
-
-const ADMIN_USER_ID = "o5NeITfIMwSQhhyV28HQ";
+import { useUser } from '../model/auth/UserContext';
+import { useRouter } from 'next/navigation';
 
 type FirestoreItem = { id: string; [key: string]: any };
 
@@ -690,7 +690,8 @@ function useEventDataService() {
 }
 
 export default function AdminPage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user, loading: userLoading } = useUser();
+  const router = useRouter();
 
   // Always call hooks at the top level
   const domains = useDomainDataService();
@@ -701,20 +702,37 @@ export default function AdminPage() {
   const genders = useGenderDataService();
   const ageGroups = useAgeGroupDataService();
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    async function fetchUser() {
-      try {
-        const user = await DataService.getUserById(ADMIN_USER_ID);
-        setCurrentUser(user);
-      } catch (err) {
-        setCurrentUser(null);
-      }
+    if (!userLoading && !user) {
+      router.push('/login');
     }
-    fetchUser();
-  }, []);
+  }, [user, userLoading, router]);
 
-  if (currentUser === null) {
-    return <div className="text-center mt-20 text-xl">Access denied.</div>;
+  if (userLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect to login
+  }
+
+  // TODO: Replace with real admin check based on user role or email
+  const isAdmin = true; // For now, allow all authenticated users
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+        </div>
+      </div>
+    );
   }
 
   // Prepare options for dependency fields
@@ -725,6 +743,9 @@ export default function AdminPage() {
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
       <h1 className="text-3xl font-bold mb-8 text-center">Admin Panel</h1>
+      <div className="text-sm text-gray-600 mb-6 text-center">
+        Welcome, {user.firstName || user.email}!
+      </div>
       <AdminTable
         title="Domains"
         items={domains.items}
