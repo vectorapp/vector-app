@@ -275,10 +275,7 @@ export default function AdminPanel() {
   // Responsive: Only show on large screens
   return (
     <>
-      <div className="block lg:hidden text-center text-red-700 font-semibold my-8">
-        Admin controls are only available on desktop/laptop screens.
-      </div>
-      <div className="hidden lg:block max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
+      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
         <h1 className="text-3xl font-bold mb-8 text-center">Admin Panel</h1>
         <AdminTable
           title="Domains"
