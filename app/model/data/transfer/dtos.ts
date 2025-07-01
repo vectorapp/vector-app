@@ -20,6 +20,7 @@ export type DomainDto = {
   createdAt?: any; // Firestore Timestamp or Date
   label?: string;
   value?: string;
+  mobileLabel?: string;
 };
 
 export type UnitDto = {

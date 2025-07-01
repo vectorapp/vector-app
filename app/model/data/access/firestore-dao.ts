@@ -259,7 +259,8 @@ export class FirestoreDomainDao {
   async create(domain: Omit<Domain, 'id'>): Promise<Domain> {
     const domainDto: Omit<DomainDto, 'id' | 'createdAt'> = {
       label: domain.label,
-      value: domain.value
+      value: domain.value,
+      mobileLabel: domain.mobileLabel || '',
     };
 
     const docRef = await addDoc(collection(db, this.collectionName), {
@@ -270,7 +271,8 @@ export class FirestoreDomainDao {
     return {
       id: docRef.id,
       label: domain.label,
-      value: domain.value
+      value: domain.value,
+      mobileLabel: domain.mobileLabel || '',
     };
   }
 
@@ -287,7 +289,8 @@ export class FirestoreDomainDao {
     return {
       id: docSnap.id,
       label: data.label || '',
-      value: data.value || ''
+      value: data.value || '',
+      mobileLabel: data.mobileLabel || '',
     };
   }
 
@@ -309,7 +312,8 @@ export class FirestoreDomainDao {
     return {
       id: doc.id,
       label: data.label || '',
-      value: data.value || ''
+      value: data.value || '',
+      mobileLabel: data.mobileLabel || '',
     };
   }
 
@@ -323,7 +327,8 @@ export class FirestoreDomainDao {
       domains.push({
         id: doc.id,
         label: data.label || '',
-        value: data.value || ''
+        value: data.value || '',
+        mobileLabel: data.mobileLabel || '',
       });
     });
 
@@ -336,6 +341,7 @@ export class FirestoreDomainDao {
     
     if (domain.label !== undefined) updateData.label = domain.label;
     if (domain.value !== undefined) updateData.value = domain.value;
+    if (domain.mobileLabel !== undefined) updateData.mobileLabel = domain.mobileLabel;
 
     await updateDoc(docRef, updateData);
 

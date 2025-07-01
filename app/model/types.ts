@@ -25,6 +25,7 @@ export type Domain = {
   id?: string; // Unique identifier
   label: string;
   value: string;
+  mobileLabel?: string; // Short label for mobile/radar viz
 };
 
 export type Unit = {

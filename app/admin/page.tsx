@@ -17,11 +17,19 @@ function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode =
   initialValues?: Record<string, any>;
   mode?: 'Add' | 'Edit';
 }) {
-  const [form, setForm] = useState<Record<string, any>>(initialValues || {});
+  // Ensure all promptFields are present in form state
+  function getInitialForm() {
+    const form: Record<string, any> = {};
+    promptFields.forEach(field => {
+      form[field.key] = (initialValues && initialValues[field.key] !== undefined) ? initialValues[field.key] : '';
+    });
+    return form;
+  }
+  const [form, setForm] = useState<Record<string, any>>(getInitialForm());
 
   useEffect(() => {
-    if (open) setForm(initialValues || {});
-  }, [open, initialValues]);
+    if (open) setForm(getInitialForm());
+  }, [open, initialValues, promptFields]);
 
   return open ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -241,7 +249,8 @@ function useDomainDataService() {
     try {
       const domainData = {
         label: data.label,
-        value: data.value
+        value: data.value,
+        mobileLabel: data.mobileLabel || '',
       };
       const result = await DataService.createDomain(domainData);
       fetchDomains();
@@ -261,7 +270,8 @@ function useDomainDataService() {
     try {
       const domainData = {
         label: data.label,
-        value: data.value
+        value: data.value,
+        mobileLabel: data.mobileLabel || '',
       };
       const result = await DataService.updateDomain(id, domainData);
       fetchDomains();
@@ -273,7 +283,8 @@ function useDomainDataService() {
     items: domains.map(domain => ({ 
       id: domain.id || '', 
       label: domain.label, 
-      value: domain.value 
+      value: domain.value, 
+      mobileLabel: domain.mobileLabel || '',
     })), 
     loading, 
     addItem: addDomain, 
@@ -753,7 +764,11 @@ export default function AdminPage() {
         onAdd={domains.addItem}
         onDelete={domains.removeItem}
         onEdit={domains.editItem}
-        promptFields={[{ key: 'label', label: 'Label' }, { key: 'value', label: 'Value' }]}
+        promptFields={[
+          { key: 'label', label: 'Label' },
+          { key: 'value', label: 'Value' },
+          { key: 'mobileLabel', label: 'Mobile Label' },
+        ]}
       />
       <AdminTable
         title="Units"
