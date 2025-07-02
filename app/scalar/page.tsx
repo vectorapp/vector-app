@@ -113,7 +113,7 @@ export default function ScalarPage() {
         },
         pointLabels: {
           color: '#111827', // gray-900
-          font: { size: 16, weight: 'bold' as const },
+          font: { size: 12, weight: 'bold' as const },
         },
         grid: {
           color: '#E5E7EB', // gray-200
@@ -135,9 +135,6 @@ export default function ScalarPage() {
             <Radar data={radarData} options={radarOptions} />
           </div>
         </div>
-        <button className="w-full bg-blue-600 text-white rounded-lg px-6 py-3 font-semibold hover:bg-blue-700 transition-colors mt-2">
-          Submit PR
-        </button>
       </div>
     </div>
   );

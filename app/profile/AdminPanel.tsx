@@ -20,6 +20,17 @@ function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode =
 }) {
   const [form, setForm] = useState<Record<string, any>>(initialValues || {});
   useEffect(() => { if (open) setForm(initialValues || {}); }, [open, initialValues]);
+
+  // Debug logging
+  useEffect(() => {
+    if (open) {
+      console.log('[AddModal] mode:', mode);
+      console.log('[AddModal] promptFields:', promptFields);
+      console.log('[AddModal] initialValues:', initialValues);
+      console.log('[AddModal] form state:', form);
+    }
+  }, [open, mode, promptFields, initialValues, form]);
+
   return open ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white p-6 rounded shadow-lg min-w-[300px]">
@@ -93,6 +104,15 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
     }
     return value;
   }
+
+  // Debug logging
+  useEffect(() => {
+    if (title === 'Domains') {
+      console.log('[AdminTable] Domains promptFields:', promptFields);
+      console.log('[AdminTable] Domains items:', items);
+    }
+  }, [title, promptFields, items]);
+
   return (
     <div className="mb-10">
       <div className="flex justify-between items-center mb-2">
@@ -150,10 +170,10 @@ function useDomainDataService() {
   }
   useEffect(() => { fetchDomains(); }, []);
   async function addDomain(data: Record<string, any>) {
-    try { await DataService.createDomain({ label: data.label, value: data.value }); fetchDomains(); } catch {}
+    try { await DataService.createDomain({ label: data.label, value: data.value, mobileLabel: data.mobileLabel }); fetchDomains(); } catch {}
   }
   async function removeDomain(id: string) { try { await DataService.deleteDomain(id); fetchDomains(); } catch {} }
-  async function editDomain(id: string, data: Record<string, any>) { try { await DataService.updateDomain(id, { label: data.label, value: data.value }); fetchDomains(); } catch {} }
+  async function editDomain(id: string, data: Record<string, any>) { try { await DataService.updateDomain(id, { label: data.label, value: data.value, mobileLabel: data.mobileLabel }); fetchDomains(); } catch {} }
   return { items: domains.map(item => ({ ...item, id: item.id || item.value || item.label || '' })), loading, addItem: addDomain, removeItem: removeDomain, editItem: editDomain };
 }
 
@@ -284,7 +304,7 @@ export default function AdminPanel() {
           onAdd={domains.addItem}
           onDelete={domains.removeItem}
           onEdit={domains.editItem}
-          promptFields={[{ key: 'label', label: 'Label' }, { key: 'value', label: 'Value' }]}
+          promptFields={[{ key: 'label', label: 'Label' }, { key: 'value', label: 'Value' }, { key: 'mobileLabel', label: 'Mobile Label' }]}
         />
         <AdminTable
           title="Units"
