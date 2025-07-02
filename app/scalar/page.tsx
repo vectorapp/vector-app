@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { DataService } from '../model/data/access/service';
 import type { Domain } from '../model/types';
+import { getUserDomainScores } from '../model/scalar/scoringService';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -35,6 +36,8 @@ export default function ScalarPage() {
   const router = useRouter();
   const [domains, setDomains] = useState<Domain[]>([]);
   const [domainsLoading, setDomainsLoading] = useState(true);
+  const [domainScores, setDomainScores] = useState<{ [domainValue: string]: number }>({});
+  const [scoresLoading, setScoresLoading] = useState(true);
   const isMobile = useIsMobile();
 
   // Fetch domains from Firebase
@@ -52,6 +55,18 @@ export default function ScalarPage() {
     fetchDomains();
   }, []);
 
+  // Fetch domain scores for the user
+  useEffect(() => {
+    if (user && user.id && domains.length > 0) {
+      setScoresLoading(true);
+      const domainValues = domains.map(d => d.value);
+      getUserDomainScores(user.id, domainValues).then(scores => {
+        setDomainScores(scores);
+        setScoresLoading(false);
+      });
+    }
+  }, [user, domains]);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!userLoading && !user) {
@@ -59,7 +74,7 @@ export default function ScalarPage() {
     }
   }, [user, userLoading, router]);
 
-  if (userLoading || domainsLoading) {
+  if (userLoading || domainsLoading || scoresLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="text-gray-500">Loading...</div>
@@ -82,13 +97,13 @@ export default function ScalarPage() {
   // Use mobileLabel if on mobile, otherwise use label
   const radarLabels = domains.map(d => (isMobile && d.mobileLabel ? d.mobileLabel : d.label));
 
-  // Radar chart data (all 0 for now)
+  // Radar chart data (use fetched scores)
   const radarData = {
     labels: radarLabels,
     datasets: [
       {
         label: 'Scalar',
-        data: domains.map(() => 0),
+        data: domains.map(d => domainScores[d.value] ?? 0),
         backgroundColor: 'rgba(59, 130, 246, 0.2)', // blue-500, 20% opacity
         borderColor: 'rgba(59, 130, 246, 1)', // blue-500
         borderWidth: 2,
@@ -96,6 +111,9 @@ export default function ScalarPage() {
       },
     ],
   };
+
+  // Dynamically set max to the largest normalized value (or 1 if all are zero)
+  const maxScore = Math.max(1, ...Object.values(domainScores));
 
   const radarOptions = {
     responsive: true,
@@ -106,7 +124,7 @@ export default function ScalarPage() {
     scales: {
       r: {
         min: 0,
-        max: 1000,
+        max: maxScore,
         ticks: {
           stepSize: 250,
           color: '#6B7280', // gray-500
