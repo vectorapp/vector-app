@@ -96,6 +96,12 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
       return item.description.length > 30 ? item.description.slice(0, 30) + '...' : item.description;
     }
     const value = item[field.key];
+    if (field.key === 'gender') {
+      console.log('[AdminTable] Rendering gender cell:', { item, field, value });
+    }
+    if (field.key === 'gender' && value && typeof value === 'object') {
+      return value.label || value.value || '';
+    }
     if (typeof value === 'object' && value !== null) {
       if (Array.isArray(value)) {
         return value.map(v => (typeof v === 'object' && v !== null ? v.label || v.value || JSON.stringify(v) : v)).join(', ');
@@ -297,6 +303,7 @@ export default function AdminPanel() {
     <>
       <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
         <h1 className="text-3xl font-bold mb-8 text-center">Admin Panel</h1>
+        {/*
         <AdminTable
           title="Domains"
           items={domains.items}
@@ -344,21 +351,6 @@ export default function AdminPanel() {
           ]}
         />
         <AdminTable
-          title="Users"
-          items={users.items}
-          loading={users.loading}
-          onAdd={users.addItem}
-          onDelete={users.removeItem}
-          onEdit={users.editItem}
-          promptFields={[
-            { key: 'firstName', label: 'First Name' },
-            { key: 'lastName', label: 'Last Name' },
-            { key: 'email', label: 'Email' },
-            { key: 'gender', label: 'Gender', options: genders.items.map(g => ({ value: g.value, label: g.label })) },
-            { key: 'birthday', label: 'Birthday' },
-          ]}
-        />
-        <AdminTable
           title="Genders"
           items={genders.items}
           loading={genders.loading}
@@ -380,6 +372,22 @@ export default function AdminPanel() {
           promptFields={[
             { key: 'lowerBound', label: 'Lower Bound' },
             { key: 'upperBound', label: 'Upper Bound' },
+          ]}
+        />
+        */}
+        <AdminTable
+          title="Users"
+          items={users.items}
+          loading={users.loading}
+          onAdd={users.addItem}
+          onDelete={users.removeItem}
+          onEdit={users.editItem}
+          promptFields={[
+            { key: 'firstName', label: 'First Name' },
+            { key: 'lastName', label: 'Last Name' },
+            { key: 'email', label: 'Email' },
+            { key: 'gender', label: 'Gender', options: genders.items.map(g => ({ value: g.value, label: g.label })) },
+            { key: 'birthday', label: 'Birthday' },
           ]}
         />
       </div>

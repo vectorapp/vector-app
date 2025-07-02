@@ -1,6 +1,6 @@
 import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao, FirestoreEventDao, FirestoreSubmissionDao } from './firestore-dao';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
-import { DOMAINS, UNITS } from '../../types';
+import { DOMAINS, UNITS, UNIT_TYPES, EVENTS, GENDERS, AGE_GROUPS } from '../../types';
 
 // Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
@@ -109,7 +109,8 @@ export class DataService {
   }
 
   static async getAllGenders(): Promise<Gender[]> {
-    return getGenderDao().findAll();
+    // Return the locally defined genders constant
+    return GENDERS as unknown as Gender[];
   }
 
   static async updateGender(id: string, gender: Partial<Omit<Gender, 'id'>>): Promise<Gender> {
@@ -160,7 +161,8 @@ export class DataService {
   }
 
   static async getAllUnitTypes(): Promise<UnitType[]> {
-    return getUnitTypeDao().findAll();
+    // Return the locally defined unit types constant
+    return UNIT_TYPES as unknown as UnitType[];
   }
 
   static async updateUnitType(id: string, unitType: Partial<Omit<UnitType, 'id'>>): Promise<UnitType> {
@@ -211,7 +213,8 @@ export class DataService {
   }
 
   static async getAllAgeGroups(): Promise<AgeGroup[]> {
-    return getAgeGroupDao().findAll();
+    // Return the locally defined age groups constant
+    return AGE_GROUPS as unknown as AgeGroup[];
   }
 
   static async updateAgeGroup(id: string, ageGroup: Partial<Omit<AgeGroup, 'id'>>): Promise<AgeGroup> {
@@ -289,24 +292,8 @@ export class DataService {
   }
 
   static async getAllEvents(): Promise<Event[]> {
-    const events = await getEventDao().findAll();
-    
-    // Hydrate all events with full objects
-    const [unitTypes, domains] = await Promise.all([
-      this.getAllUnitTypes(),
-      this.getAllDomains()
-    ]);
-    
-    return events.map(event => {
-      const unitType = unitTypes.find(u => u.value === (event as any).unitType || u.id === (event as any).unitType);
-      const domain = domains.find(d => d.value === (event as any).domain || d.id === (event as any).domain);
-      
-      return {
-        ...event,
-        unitType: unitType!,
-        domain: domain!
-      };
-    });
+    // Return the locally defined events constant
+    return EVENTS as unknown as Event[];
   }
 
   static async updateEvent(id: string, event: Partial<Omit<Event, 'id'>>): Promise<Event> {
