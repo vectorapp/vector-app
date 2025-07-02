@@ -1,5 +1,6 @@
 import { FirestoreUserDao, FirestoreGenderDao, FirestoreDomainDao, FirestoreUnitTypeDao, FirestoreUnitDao, FirestoreAgeGroupDao, FirestoreEventDao, FirestoreSubmissionDao } from './firestore-dao';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
+import { DOMAINS, UNITS } from '../../types';
 
 // Singleton instances of the DAOs
 let userDao: FirestoreUserDao | null = null;
@@ -133,7 +134,8 @@ export class DataService {
   }
 
   static async getAllDomains(): Promise<Domain[]> {
-    return getDomainDao().findAll();
+    // Return the locally defined domains constant
+    return DOMAINS as unknown as Domain[];
   }
 
   static async updateDomain(id: string, domain: Partial<Omit<Domain, 'id'>>): Promise<Domain> {
@@ -183,7 +185,8 @@ export class DataService {
   }
 
   static async getAllUnits(): Promise<Unit[]> {
-    return getUnitDao().findAll();
+    // Return the locally defined units constant
+    return UNITS as unknown as Unit[];
   }
 
   static async updateUnit(id: string, unit: Partial<Omit<Unit, 'id'>>): Promise<Unit> {

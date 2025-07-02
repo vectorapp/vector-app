@@ -58,4 +58,48 @@ export type Submission = {
   value: number; // Business logic value (seconds for time, number for others)
   unit?: Unit | null; // Full Unit object for non-time events, null for time events
   createdAt?: any; // Firestore Timestamp or Date
-}; 
+};
+
+export const DOMAINS = [
+  {
+    label: 'Agility & Coordination',
+    value: 'agility-coordination',
+  },
+  {
+    label: 'Anaerobic Power/Speed',
+    value: 'anaerobic-power-speed',
+  },
+  {
+    label: 'Muscular Endurance',
+    value: 'muscular-endurance',
+  },
+  {
+    label: 'Muscular Strength',
+    value: 'muscular-strength',
+  },
+  {
+    label: 'Olympic Lifting',
+    value: 'olympic-lifting',
+  },
+  {
+    label: 'Steady State Endurance',
+    value: 'steady-state-endurance',
+  },
+] as const;
+
+export type DomainValue = typeof DOMAINS[number]['value'];
+
+export const UNITS = [
+  { label: 'Calories', value: 'calories' },
+  { label: 'Centimeters', value: 'centimeters' },
+  { label: 'Feet', value: 'feet' },
+  { label: 'Inches', value: 'inches' },
+  { label: 'Kilograms', value: 'kilograms' },
+  { label: 'Meters', value: 'meters' },
+  { label: 'Minutes', value: 'minutes' },
+  { label: 'Pounds', value: 'pounds' },
+  { label: 'Repetitions', value: 'repetitions' },
+  { label: 'Seconds', value: 'seconds' },
+] as const;
+
+export type UnitValue = typeof UNITS[number]['value']; 
