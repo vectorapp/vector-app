@@ -4,9 +4,11 @@ import { COHORTS, AGE_GROUPS, Cohort, CohortKey } from '../types';
 // Utility: Get user's cohort based on birthday and gender
 export function getUserCohort(user: { birthday?: string; gender?: { value: string } }): Cohort | undefined {
   if (!user.birthday || !user.gender?.value) return undefined;
+  
   const birthYear = Number(user.birthday.split('-')[0]);
   const birthMonth = Number(user.birthday.split('-')[1] || '1');
   const birthDay = Number(user.birthday.split('-')[2] || '1');
+  
   const today = new Date();
   let age = today.getFullYear() - birthYear;
   // Adjust if birthday hasn't occurred yet this year
@@ -16,9 +18,11 @@ export function getUserCohort(user: { birthday?: string; gender?: { value: strin
   ) {
     age--;
   }
+  
   const ageGroup = AGE_GROUPS.find(g => age >= g.lowerBound && age <= g.upperBound);
   if (!ageGroup) return undefined;
-  return COHORTS.find(c => c.gender === user.gender?.value && c.age.lowerBound === ageGroup.lowerBound && c.age.upperBound === ageGroup.upperBound);
+  
+  return COHORTS.find(c => c.gender.value === user.gender?.value && c.age.lowerBound === ageGroup.lowerBound && c.age.upperBound === ageGroup.upperBound);
 }
 
 // Calculate the normalized score for a user and a domain

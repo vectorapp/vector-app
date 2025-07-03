@@ -13,8 +13,8 @@ import {
   Legend,
 } from 'chart.js';
 import { DataService } from '../model/data/access/service';
-import type { Domain } from '../model/types';
-import { getUserDomainScores } from '../model/scalar/scoringService';
+import type { Domain, Cohort } from '../model/types';
+import { getUserDomainScores, getUserCohort } from '../model/scalar/scoringService';
 import { DOMAINS } from '../model/types';
 import * as GiIcons from 'react-icons/gi';
 
@@ -40,6 +40,7 @@ export default function ScalarPage() {
   const [domainsLoading, setDomainsLoading] = useState(true);
   const [domainScores, setDomainScores] = useState<{ [domainValue: string]: number }>({});
   const [scoresLoading, setScoresLoading] = useState(true);
+  const [userCohort, setUserCohort] = useState<Cohort | undefined>(undefined);
   const isMobile = useIsMobile();
 
   // Fetch domains from Firebase
@@ -68,6 +69,14 @@ export default function ScalarPage() {
       });
     }
   }, [user, domains]);
+
+  // Get user's cohort
+  useEffect(() => {
+    if (user) {
+      const cohort = getUserCohort(user);
+      setUserCohort(cohort);
+    }
+  }, [user]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -146,9 +155,30 @@ export default function ScalarPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md mx-auto pt-8 pb-12 px-4">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-6 text-center tracking-tight">Insights</h1>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-2xl mx-auto p-6">
+        {/* Header */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Insights</h1>
+
+        {/* Cohort Information */}
+        {userCohort && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Your Cohort</h3>
+                <p className="text-lg font-semibold text-gray-900">
+                  {userCohort.gender.label}, {userCohort.age.lowerBound}-{userCohort.age.upperBound} years
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">Compared to peers</p>
+                <p className="text-xs text-gray-400">in your age group</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Radar Chart */}
         <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
           <div className="w-full flex justify-center mb-4">
             <div className="relative w-72 h-72">
