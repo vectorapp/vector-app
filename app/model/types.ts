@@ -114,8 +114,8 @@ export type UnitValue = typeof UNITS[number]['value'];
 
 export const UNIT_TYPES = [
   {
-    label: 'Calories',
-    value: 'calories',
+    label: 'Energy',
+    value: 'energy',
     units: [UNITS.find(u => u.value === 'calories')!],
   },
   {
@@ -148,7 +148,7 @@ export const EVENTS = [
     domain: DOMAINS.find(d => d.value === 'anaerobic-power-speed')!,
     label: '60-Second Assault Bike for Max Calories',
     value: 'assault-bike',
-    unitType: UNIT_TYPES.find(u => u.value === 'calories')!,
+    unitType: UNIT_TYPES.find(u => u.value === 'energy')!,
   },
   {
     domain: DOMAINS.find(d => d.value === 'muscular-endurance')!,
@@ -288,4 +288,44 @@ export const COHORTS = [
 ] as const;
 
 export type Cohort = typeof COHORTS[number];
-export type CohortKey = typeof COHORTS[number]['key']; 
+export type CohortKey = typeof COHORTS[number]['key'];
+
+// Benchmark performance levels
+export type BenchmarkLevel = {
+  poor: number;
+  elite: number;
+  unit: Unit; // Reference to the UNITS array
+};
+
+// Type for event benchmarks using cohort keys
+export type EventBenchmarks = {
+  [K in CohortKey]: BenchmarkLevel;
+};
+
+// Benchmark data for each event and cohort
+export const BENCHMARKS = {
+  // 1RM Deadlift benchmarks (in pounds)
+  [EVENTS.find(e => e.value === 'deadlift')!.value]: {
+    // Male benchmarks
+    [COHORTS.find(c => c.key === 'male_18_29')!.key]: { poor: 173, elite: 552, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_30_39')!.key]: { poor: 173, elite: 552, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_40_49')!.key]: { poor: 164, elite: 524, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_50_59')!.key]: { poor: 142, elite: 455, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_60_69')!.key]: { poor: 130, elite: 415, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_70_79')!.key]: { poor: 105, elite: 336, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_80_89')!.key]: { poor: 105, elite: 336, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'male_90_99')!.key]: { poor: 105, elite: 336, unit: UNITS.find(u => u.value === 'pounds')! },
+    // Female benchmarks
+    [COHORTS.find(c => c.key === 'female_18_29')!.key]: { poor: 84, elite: 345, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_30_39')!.key]: { poor: 84, elite: 345, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_40_49')!.key]: { poor: 80, elite: 328, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_50_59')!.key]: { poor: 69, elite: 284, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_60_69')!.key]: { poor: 63, elite: 260, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_70_79')!.key]: { poor: 51, elite: 210, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_80_89')!.key]: { poor: 51, elite: 210, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_90_99')!.key]: { poor: 51, elite: 210, unit: UNITS.find(u => u.value === 'pounds')! },
+    // Under 18 - using 18-29 values as baseline
+    [COHORTS.find(c => c.key === 'male_under_18')!.key]: { poor: 173, elite: 552, unit: UNITS.find(u => u.value === 'pounds')! },
+    [COHORTS.find(c => c.key === 'female_under_18')!.key]: { poor: 84, elite: 345, unit: UNITS.find(u => u.value === 'pounds')! },
+  } as EventBenchmarks,
+} as const; 
