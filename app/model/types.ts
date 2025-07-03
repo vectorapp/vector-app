@@ -26,6 +26,7 @@ export type Domain = {
   label: string;
   value: string;
   mobileLabel?: string; // Short label for mobile/radar viz
+  logo: string; // Icon component name for feed/scalar
 };
 
 export type Unit = {
@@ -64,26 +65,32 @@ export const DOMAINS = [
   {
     label: 'Agility & Coordination',
     value: 'agility-coordination',
+    logo: 'GiJumpingRope',
   },
   {
     label: 'Anaerobic Power/Speed',
     value: 'anaerobic-power-speed',
+    logo: 'GiSprint',
   },
   {
     label: 'Muscular Endurance',
     value: 'muscular-endurance',
+    logo: 'GiStairsGoal',
   },
   {
     label: 'Muscular Strength',
     value: 'muscular-strength',
+    logo: 'GiWeightLiftingUp',
   },
   {
     label: 'Olympic Lifting',
     value: 'olympic-lifting',
+    logo: 'GiWeightLiftingUp',
   },
   {
     label: 'Steady State Endurance',
     value: 'steady-state-endurance',
+    logo: 'GiPathDistance',
   },
 ] as const;
 

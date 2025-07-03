@@ -15,6 +15,12 @@ import { db } from './firebase';
 import type { UserDao } from './dao';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
 import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto, EventDto, SubmissionDto } from '../transfer/dtos';
+import { GENDERS } from '../../types';
+
+// Type guard for gender object
+function isGenderObject(g: any): g is { value: string } {
+  return typeof g === 'object' && g !== null && 'value' in g;
+}
 
 // Base Firestore DAO implementation
 abstract class BaseFirestoreDao<T, TDto> {
@@ -106,29 +112,15 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
   }
 
   protected async dtoToEntity(dto: UserDto): Promise<User> {
-    // Fetch the gender object
+    // Hydrate the gender object from local constants
     let gender = undefined;
-    
     if (dto.gender) {
-      // Find gender document by matching the value field
-      const gendersSnapshot = await getDocs(collection(db, 'genders'));
-      const genderDoc = gendersSnapshot.docs.find(doc => {
-        const data = doc.data() as GenderDto;
-        return data.value === dto.gender;
-      });
-      
-      if (genderDoc) {
-        const genderData = genderDoc.data() as GenderDto;
-        
-        if (genderData && genderData.value && genderData.label) {
-          gender = {
-            value: genderData.value,
-            label: genderData.label
-          };
-        }
+      if (typeof dto.gender === 'string') {
+        gender = GENDERS.find(g => g.value === dto.gender);
+      } else if (isGenderObject(dto.gender)) {
+        gender = GENDERS.find(g => g.value === dto.gender.value) || dto.gender;
       }
     }
-
     const result = {
       id: dto.id,
       createdAt: dto.createdAt,
@@ -138,7 +130,6 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
       gender,
       birthday: dto.birthday || ''
     };
-    
     return result;
   }
 

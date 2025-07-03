@@ -7,9 +7,11 @@ import { FiThumbsUp, FiMessageCircle, FiShare } from 'react-icons/fi';
 import { GiJumpingRope, GiSprint, GiStairsGoal, GiWeightLiftingUp, GiPathDistance } from 'react-icons/gi';
 import { FaDumbbell, FaRunning, FaBolt, FaHeartbeat, FaRoad } from 'react-icons/fa';
 import type { User, Event, Unit, UnitType, Domain, Submission } from './model/types';
+import { DOMAINS } from './model/types';
 import { DataService } from './model/data/access/service';
 import { useUser } from './model/auth/UserContext';
 import { useRouter } from 'next/navigation';
+import * as GiIcons from 'react-icons/gi';
 
 // Helper to convert HH:MM:SS to seconds
 function timeStringToSeconds(time: string): number {
@@ -57,14 +59,13 @@ function formatTimeValue(seconds: number): string {
   }
 }
 
-const domainIcons = {
-  'agility-coordination': GiJumpingRope,
-  'anaerobic-power-speed': GiSprint,
-  'muscular-endurance': GiStairsGoal,
-  'muscular-strength': GiWeightLiftingUp,
-  'olympic-lifting': GiWeightLiftingUp,
-  'steady-state-endurance': GiPathDistance,
-};
+// Helper to get the icon component for a domain value
+function getDomainIcon(domainValue: string) {
+  const domain = DOMAINS.find(d => d.value === domainValue);
+  if (!domain) return null;
+  const IconComponent = GiIcons[domain.logo as keyof typeof GiIcons];
+  return IconComponent || null;
+}
 
 export default function Home() {
   const { user, loading: userLoading } = useUser();
@@ -394,7 +395,7 @@ export default function Home() {
                   userInitials = userName.charAt(0).toUpperCase();
                 }
               }
-              const DomainIcon = domainIcons[submission.event.domain.value as keyof typeof domainIcons] || FaDumbbell;
+              const DomainIcon = getDomainIcon(submission.event.domain.value);
               return (
                 <div key={submission.id} className="bg-white rounded-lg shadow-sm p-6">
                   {/* User name and date row */}
@@ -433,7 +434,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-right flex-1 justify-end items-end">
-                      <DomainIcon className="w-5 h-5 text-blue-400" />
+                      {DomainIcon && <DomainIcon className="w-5 h-5 text-blue-400" />}
                       <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">{submission.event.domain.label}</span>
                     </div>
                   </div>

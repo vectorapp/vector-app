@@ -15,6 +15,8 @@ import {
 import { DataService } from '../model/data/access/service';
 import type { Domain } from '../model/types';
 import { getUserDomainScores } from '../model/scalar/scoringService';
+import { DOMAINS } from '../model/types';
+import * as GiIcons from 'react-icons/gi';
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
@@ -94,8 +96,16 @@ export default function ScalarPage() {
     );
   }
 
-  // Use mobileLabel if on mobile, otherwise use label
-  const radarLabels = domains.map(d => (isMobile && d.mobileLabel ? d.mobileLabel : d.label));
+  // Use logo icons as labels (Chart.js only supports strings, so use emoji as placeholder)
+  const radarLabels = domains.map(d => {
+    // Option 1: Use emoji as placeholder for icon
+    // return '🔵';
+    // Option 2: Use the icon name as a string (will render as text)
+    return d.logo;
+    // Option 3: If Chart.js ever supports React nodes, use:
+    // const Icon = GiIcons[d.logo as keyof typeof GiIcons];
+    // return <Icon />;
+  });
 
   // Radar chart data (use fetched scores)
   const radarData = {
