@@ -223,8 +223,8 @@ export type EventValue = typeof EVENTS[number]['value'];
 export const GENDERS = [
   { label: 'Female', value: 'female' },
   { label: 'Male', value: 'male' },
-  { label: 'Non-Binary', value: 'non-binary' },
-  { label: 'Prefer Not To Say', value: 'not-stated' },
+  // { label: 'Non-Binary', value: 'non-binary' },
+  // { label: 'Prefer Not To Say', value: 'not-stated' },
 ] as const;
 
 export type GenderValue = typeof GENDERS[number]['value'];
@@ -240,4 +240,49 @@ export const AGE_GROUPS = [
   { lowerBound: 90, upperBound: 99 },
 ] as const;
 
-export type AgeGroupKey = `${typeof AGE_GROUPS[number]['lowerBound']}-${typeof AGE_GROUPS[number]['upperBound']}`; 
+export type AgeGroupKey = `${typeof AGE_GROUPS[number]['lowerBound']}-${typeof AGE_GROUPS[number]['upperBound']}`;
+
+// Cohorts: all gender and age group permutations
+export const COHORTS = [
+  // female
+  { key: 'female_18_29', gender: 'female', age: { lowerBound: 18, upperBound: 29 } },
+  { key: 'female_30_39', gender: 'female', age: { lowerBound: 30, upperBound: 39 } },
+  { key: 'female_40_49', gender: 'female', age: { lowerBound: 40, upperBound: 49 } },
+  { key: 'female_50_59', gender: 'female', age: { lowerBound: 50, upperBound: 59 } },
+  { key: 'female_60_69', gender: 'female', age: { lowerBound: 60, upperBound: 69 } },
+  { key: 'female_70_79', gender: 'female', age: { lowerBound: 70, upperBound: 79 } },
+  { key: 'female_80_89', gender: 'female', age: { lowerBound: 80, upperBound: 89 } },
+  { key: 'female_90_99', gender: 'female', age: { lowerBound: 90, upperBound: 99 } },
+  // male
+  { key: 'male_18_29', gender: 'male', age: { lowerBound: 18, upperBound: 29 } },
+  { key: 'male_30_39', gender: 'male', age: { lowerBound: 30, upperBound: 39 } },
+  { key: 'male_40_49', gender: 'male', age: { lowerBound: 40, upperBound: 49 } },
+  { key: 'male_50_59', gender: 'male', age: { lowerBound: 50, upperBound: 59 } },
+  { key: 'male_60_69', gender: 'male', age: { lowerBound: 60, upperBound: 69 } },
+  { key: 'male_70_79', gender: 'male', age: { lowerBound: 70, upperBound: 79 } },
+  { key: 'male_80_89', gender: 'male', age: { lowerBound: 80, upperBound: 89 } },
+  { key: 'male_90_99', gender: 'male', age: { lowerBound: 90, upperBound: 99 } },
+  /*
+  // non-binary
+  { key: 'non-binary_18_29', gender: 'non-binary', age: { lowerBound: 18, upperBound: 29 } },
+  { key: 'non-binary_30_39', gender: 'non-binary', age: { lowerBound: 30, upperBound: 39 } },
+  { key: 'non-binary_40_49', gender: 'non-binary', age: { lowerBound: 40, upperBound: 49 } },
+  { key: 'non-binary_50_59', gender: 'non-binary', age: { lowerBound: 50, upperBound: 59 } },
+  { key: 'non-binary_60_69', gender: 'non-binary', age: { lowerBound: 60, upperBound: 69 } },
+  { key: 'non-binary_70_79', gender: 'non-binary', age: { lowerBound: 70, upperBound: 79 } },
+  { key: 'non-binary_80_89', gender: 'non-binary', age: { lowerBound: 80, upperBound: 89 } },
+  { key: 'non-binary_90_99', gender: 'non-binary', age: { lowerBound: 90, upperBound: 99 } },
+  // not-stated
+  { key: 'not-stated_18_29', gender: 'not-stated', age: { lowerBound: 18, upperBound: 29 } },
+  { key: 'not-stated_30_39', gender: 'not-stated', age: { lowerBound: 30, upperBound: 39 } },
+  { key: 'not-stated_40_49', gender: 'not-stated', age: { lowerBound: 40, upperBound: 49 } },
+  { key: 'not-stated_50_59', gender: 'not-stated', age: { lowerBound: 50, upperBound: 59 } },
+  { key: 'not-stated_60_69', gender: 'not-stated', age: { lowerBound: 60, upperBound: 69 } },
+  { key: 'not-stated_70_79', gender: 'not-stated', age: { lowerBound: 70, upperBound: 79 } },
+  { key: 'not-stated_80_89', gender: 'not-stated', age: { lowerBound: 80, upperBound: 89 } },
+  { key: 'not-stated_90_99', gender: 'not-stated', age: { lowerBound: 90, upperBound: 99 } },
+  */
+] as const;
+
+export type Cohort = typeof COHORTS[number];
+export type CohortKey = typeof COHORTS[number]['key']; 
