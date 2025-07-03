@@ -829,6 +829,7 @@ export class FirestoreSubmissionDao {
       userId: submission.user.id || submission.user.email,
       event: submission.event.value,
       rawValue: submission.rawValue,
+      value: submission.value, // Save the computed numeric value
       unit: submission.unit ? submission.unit.value : null
     };
 
@@ -864,7 +865,7 @@ export class FirestoreSubmissionDao {
       user: data.userId || '',
       event: data.event || '',
       rawValue: data.rawValue || '',
-      value: 0, // Will be computed by DataService
+      value: data.value || 0, // Use stored value from Firestore
       unit: data.unit || null,
       createdAt: data.createdAt
     } as unknown as Submission;
@@ -887,7 +888,7 @@ export class FirestoreSubmissionDao {
         user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        value: 0, // Will be computed by DataService
+        value: data.value || 0, // Use stored value from Firestore
         unit: data.unit || null,
         createdAt: data.createdAt
       } as unknown as Submission);
@@ -913,7 +914,7 @@ export class FirestoreSubmissionDao {
         user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        value: 0, // Will be computed by DataService
+        value: data.value || 0, // Use stored value from Firestore
         unit: data.unit || null,
         createdAt: data.createdAt
       } as unknown as Submission);
@@ -934,7 +935,7 @@ export class FirestoreSubmissionDao {
         user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        value: 0, // Will be computed by DataService
+        value: data.value || 0, // Use stored value from Firestore
         unit: data.unit || null,
         createdAt: data.createdAt
       } as unknown as Submission);
@@ -954,6 +955,7 @@ export class FirestoreSubmissionDao {
       updateData.event = typeof submission.event === 'string' ? submission.event : submission.event.value;
     }
     if (submission.rawValue !== undefined) updateData.rawValue = submission.rawValue;
+    if (submission.value !== undefined) updateData.value = submission.value; // Update the computed numeric value
     if (submission.unit !== undefined) {
       updateData.unit = submission.unit ? (typeof submission.unit === 'string' ? submission.unit : submission.unit.value) : null;
     }

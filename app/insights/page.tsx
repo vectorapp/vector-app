@@ -63,8 +63,32 @@ export default function ScalarPage() {
     if (user && user.id && domains.length > 0) {
       setScoresLoading(true);
       const domainValues = domains.map(d => d.value);
+      
+      console.log('🔍 [Insights] Starting score calculation for user:', user.id);
+      console.log('🔍 [Insights] User data:', {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        birthday: user.birthday
+      });
+      console.log('🔍 [Insights] Domain values to calculate:', domainValues);
+      console.log('🔍 [Insights] Available domains:', domains.map(d => ({ value: d.value, label: d.label })));
+      
       getUserDomainScores(user.id, domainValues).then(scores => {
+        console.log('🔍 [Insights] Received domain scores:', scores);
+        
+        // Log each domain score individually
+        Object.entries(scores).forEach(([domainValue, score]) => {
+          const domain = domains.find(d => d.value === domainValue);
+          console.log(`🔍 [Insights] ${domain?.label || domainValue}: ${score}/1000`);
+        });
+        
         setDomainScores(scores);
+        setScoresLoading(false);
+      }).catch(error => {
+        console.error('🔍 [Insights] Error fetching domain scores:', error);
         setScoresLoading(false);
       });
     }
@@ -73,7 +97,23 @@ export default function ScalarPage() {
   // Get user's cohort
   useEffect(() => {
     if (user) {
+      console.log('🔍 [Insights] Calculating user cohort for user:', user.id);
+      console.log('🔍 [Insights] User birthday:', user.birthday);
+      console.log('🔍 [Insights] User gender:', user.gender);
+      
       const cohort = getUserCohort(user);
+      console.log('🔍 [Insights] Calculated cohort:', cohort);
+      
+      if (cohort) {
+        console.log('🔍 [Insights] Cohort details:', {
+          key: cohort.key,
+          gender: cohort.gender.label,
+          ageRange: `${cohort.age.lowerBound}-${cohort.age.upperBound}`
+        });
+      } else {
+        console.warn('🔍 [Insights] No cohort found for user - this will result in zero scores');
+      }
+      
       setUserCohort(cohort);
     }
   }, [user]);
@@ -109,12 +149,13 @@ export default function ScalarPage() {
   const radarLabels = domains.map(() => '');
 
   // Radar chart data (use fetched scores)
+  const chartData = domains.map(d => domainScores[d.value] ?? 0);
   const radarData = {
     labels: radarLabels,
     datasets: [
       {
         label: 'Scalar',
-        data: domains.map(d => domainScores[d.value] ?? 0),
+        data: chartData,
         backgroundColor: 'rgba(59, 130, 246, 0.2)', // blue-500, 20% opacity
         borderColor: 'rgba(59, 130, 246, 1)', // blue-500
         borderWidth: 2,
@@ -125,6 +166,14 @@ export default function ScalarPage() {
 
   // Dynamically set max to the largest normalized value (or 1 if all are zero)
   const maxScore = Math.max(1, ...Object.values(domainScores));
+  
+  // Debug logging for chart data
+  console.log('🔍 [Insights] Chart data being rendered:', {
+    domains: domains.map(d => d.label),
+    scores: chartData,
+    maxScore,
+    domainScores
+  });
 
   const radarOptions = {
     responsive: true,
@@ -207,7 +256,36 @@ export default function ScalarPage() {
               })}
             </div>
           </div>
-          {/* You can add more analytics widgets or summary stats here */}
+        </div>
+
+        {/* Debug Info Section */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
+          <h3 className="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug Information</h3>
+          <div className="space-y-2 text-xs text-yellow-700">
+            <div>
+              <strong>User:</strong> {user.firstName} {user.lastName} ({user.email})
+            </div>
+            <div>
+              <strong>Cohort:</strong> {userCohort ? `${userCohort.gender.label}, ${userCohort.age.lowerBound}-${userCohort.age.upperBound} years (${userCohort.key})` : 'Not calculated'}
+            </div>
+            <div>
+              <strong>Domain Scores:</strong>
+              <div className="ml-4 mt-1">
+                {domains.map(domain => (
+                  <div key={domain.value} className="flex justify-between">
+                    <span>{domain.label}:</span>
+                    <span className="font-mono">{domainScores[domain.value] ?? 0}/1000</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <strong>Max Score:</strong> {maxScore}
+            </div>
+            <div className="text-xs text-yellow-600 mt-2">
+              Check browser console for detailed score calculation logs.
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -3,24 +3,40 @@ import { COHORTS, AGE_GROUPS, Cohort, CohortKey, BENCHMARKS, EVENTS, DOMAINS, Su
 import { DataService } from '../data/access/service';
 
 /**
- * STRENGTH DOMAIN SCORING ALGORITHM
+ * GENERIC DOMAIN SCORING ALGORITHM
  * 
- * This module implements normalized scoring for the muscular strength domain using benchmarks
- * from Marathon Handbook strength training data. The scoring system:
+ * This module implements normalized scoring for all fitness domains using benchmarks
+ * and handles both "higher is better" and "lower is better" event types:
  * 
  * 1. COHORT MATCHING: Determines user's cohort based on age and gender
- * 2. BENCHMARK COMPARISON: Compares user's best performance in each strength event 
- *    (deadlift, back squat, military press) to cohort-specific benchmarks
+ * 2. BENCHMARK COMPARISON: Compares user's best performance in each domain event 
+ *    to cohort-specific benchmarks
  * 3. SCORE CALCULATION: Uses a 0-1000 scale where:
  *    - 0-250: Below to at poor performance level
  *    - 250-750: Linear interpolation between poor and elite
  *    - 750-1000: At or above elite performance level
- * 4. DOMAIN SCORE: Averages scores across all completed strength events
+ * 4. DOMAIN SCORE: Averages scores across all completed events in the domain
+ * 
+ * EVENT TYPES:
+ * - "Higher is better" (weight, repetitions, energy): More is better
+ * - "Lower is better" (time): Less is better (faster times)
  * 
  * Example: A 25-year-old male who deadlifts 400 lbs:
  * - Cohort: male_18_29 (Poor: 173 lb, Elite: 552 lb)
  * - Score: 250 + 500 * ((400-173)/(552-173)) = 549/1000
  */
+
+// Utility: Determine if an event is "higher is better" or "lower is better"
+function isHigherBetter(unitType: string): boolean {
+  // "Lower is better" for time events (faster times are better)
+  if (unitType === 'time') {
+    return false;
+  }
+  
+  // "Higher is better" for weight, repetitions, energy events
+  // (more weight lifted, more reps, more calories burned are better)
+  return true;
+}
 
 // Utility: Get user's cohort based on birthday and gender
 export function getUserCohort(user: { birthday?: string; gender?: { value: string } }): Cohort | undefined {
@@ -71,19 +87,48 @@ export function getUserCohort(user: { birthday?: string; gender?: { value: strin
 // Calculate the normalized score for a user and a domain
 export async function getNormalizedDomainScore(userId: string, domainValue: string): Promise<number> {
   try {
+    console.log(`🔍 [ScoreService] Starting score calculation for userId: ${userId}, domain: ${domainValue}`);
+    
     // Get user submissions
     const submissions = await DataService.getSubmissionsByUserId(userId);
+    console.log(`🔍 [ScoreService] Total submissions retrieved: ${submissions.length}`);
+    console.log(`🔍 [ScoreService] All submissions:`, submissions.map(s => ({
+      eventValue: s.event.value,
+      eventDomain: s.event.domain.value,
+      rawValue: s.rawValue,
+      value: s.value,
+      unit: s.unit?.value || 'time'
+    })));
     
     // Filter submissions for this domain
     const domainSubmissions = submissions.filter(s => s.event.domain.value === domainValue);
+    console.log(`🔍 [ScoreService] Domain submissions for ${domainValue}: ${domainSubmissions.length}`);
+    console.log(`🔍 [ScoreService] Domain submissions details:`, domainSubmissions.map(s => ({
+      eventValue: s.event.value,
+      eventLabel: s.event.label,
+      rawValue: s.rawValue,
+      value: s.value,
+      unit: s.unit?.value || 'time',
+      unitType: s.event.unitType.value
+    })));
     
     if (domainSubmissions.length === 0) {
+      console.log(`🔍 [ScoreService] No submissions found for domain: ${domainValue}`);
       return 0; // No submissions for this domain
     }
     
     // Get user information to determine cohort
     const userSubmission = domainSubmissions[0]; // Get user from first submission
     const user = userSubmission.user;
+    console.log(`🔍 [ScoreService] User from submission:`, {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      gender: user.gender,
+      birthday: user.birthday
+    });
+    
     const cohort = getUserCohort(user);
     
     if (!cohort) {
@@ -91,89 +136,126 @@ export async function getNormalizedDomainScore(userId: string, domainValue: stri
       return 0;
     }
     
-    // Handle strength domain specifically
-    if (domainValue === 'muscular-strength') {
-      return calculateStrengthScore(domainSubmissions, cohort);
-    }
-    
-    // For other domains, return a placeholder score for now
-    return Math.floor(Math.random() * 1001);
+    // Calculate domain score using generic algorithm
+    return calculateDomainScore(domainSubmissions, cohort, domainValue);
   } catch (error) {
     console.error('Error calculating normalized domain score:', error);
     return 0;
   }
 }
 
-// Calculate strength domain score using benchmarks
-function calculateStrengthScore(submissions: Submission[], cohort: Cohort): number {
-  const strengthEvents = ['deadlift', 'back-squat', 'military-press'];
+// Calculate domain score using generic algorithm for any domain
+function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainValue: string): number {
+  // Get all unique events in this domain from submissions
+  const uniqueEvents = Array.from(new Set(submissions.map(s => s.event.value)));
   const eventScores: number[] = [];
   
-  console.log('🏋️ Calculating strength score for cohort:', cohort.key);
-  console.log('🏋️ Total strength submissions:', submissions.length);
+  console.log(`🏃 Calculating ${domainValue} score for cohort:`, cohort.key);
+  console.log(`🏃 Total domain submissions:`, submissions.length);
+  console.log(`🏃 Unique events in domain:`, uniqueEvents);
   
-  for (const eventValue of strengthEvents) {
-    // Get user's best performance for this event
+  for (const eventValue of uniqueEvents) {
+    // Get user's submissions for this event
     const eventSubmissions = submissions.filter(s => s.event.value === eventValue);
     
     if (eventSubmissions.length === 0) {
       continue; // Skip events with no submissions
     }
     
-    // Find the best (highest) performance
-    const bestSubmission = eventSubmissions.reduce((best, current) => 
-      current.value > best.value ? current : best
-    );
+    // Get the event info to determine scoring direction
+    const eventInfo = eventSubmissions[0].event;
+    const higherIsBetter = isHigherBetter(eventInfo.unitType.value);
     
-    console.log(`🏋️ Best ${eventValue} performance:`, bestSubmission.value);
+    // Find the best performance based on scoring direction
+    console.log(`🏃 All ${eventValue} submissions:`, eventSubmissions.map(s => ({
+      rawValue: s.rawValue,
+      value: s.value,
+      unit: s.unit?.value || 'time',
+      createdAt: s.createdAt
+    })));
+    
+    const bestSubmission = eventSubmissions.reduce((best, current) => {
+      console.log(`🏃 Comparing ${eventValue} submissions - Current: ${current.value}, Best: ${best.value}`);
+      if (higherIsBetter) {
+        return current.value > best.value ? current : best;
+      } else {
+        return current.value < best.value ? current : best;
+      }
+    });
+    
+    console.log(`🏃 Best ${eventValue} performance:`, {
+      rawValue: bestSubmission.rawValue,
+      value: bestSubmission.value,
+      unit: bestSubmission.unit?.value || 'time',
+      higherIsBetter
+    });
     
     // Get benchmarks for this event and cohort
     const eventBenchmarks = BENCHMARKS[eventValue as keyof typeof BENCHMARKS];
     if (!eventBenchmarks) {
-      console.warn(`🏋️ No benchmarks found for event: ${eventValue}`);
+      console.warn(`🏃 No benchmarks found for event: ${eventValue}`);
       continue; // Skip if no benchmarks available
     }
     
     const cohortBenchmarks = eventBenchmarks[cohort.key as keyof typeof eventBenchmarks];
     if (!cohortBenchmarks) {
-      console.warn(`🏋️ No cohort benchmarks found for ${eventValue} and cohort ${cohort.key}`);
+      console.warn(`🏃 No cohort benchmarks found for ${eventValue} and cohort ${cohort.key}`);
       continue; // Skip if no cohort benchmarks available
     }
     
-    console.log(`🏋️ ${eventValue} benchmarks - Poor: ${cohortBenchmarks.poor}, Elite: ${cohortBenchmarks.elite}`);
+    console.log(`🏃 ${eventValue} benchmarks - Poor: ${cohortBenchmarks.poor}, Elite: ${cohortBenchmarks.elite}`);
     
     // Calculate normalized score (0-1000 scale)
-    const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.poor, cohortBenchmarks.elite);
-    console.log(`🏋️ ${eventValue} normalized score: ${score}`);
+    const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.poor, cohortBenchmarks.elite, higherIsBetter);
+    console.log(`🏃 ${eventValue} normalized score: ${score}`);
     eventScores.push(score);
   }
   
   const finalScore = eventScores.length > 0 ? Math.round(eventScores.reduce((sum, score) => sum + score, 0) / eventScores.length) : 0;
-  console.log('🏋️ Final strength domain score:', finalScore);
+  console.log(`🏃 Final ${domainValue} domain score:`, finalScore);
   
   // Return average score if we have any event scores, otherwise 0
   return finalScore;
 }
 
 // Calculate individual event score based on performance vs benchmarks
-function calculateEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number): number {
+function calculateEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
   // Clamp performance to reasonable bounds
   const performance = Math.max(0, userPerformance);
   
-  // If user is at or below poor benchmark, give them a low score (0-250)
-  if (performance <= poorBenchmark) {
-    return Math.max(0, Math.round(250 * (performance / poorBenchmark)));
+  if (higherIsBetter) {
+    // For "higher is better" events (weight, reps, calories)
+    // If user is at or below poor benchmark, give them a low score (0-250)
+    if (performance <= poorBenchmark) {
+      return Math.max(0, Math.round(250 * (performance / poorBenchmark)));
+    }
+    
+    // If user is at or above elite benchmark, give them a high score (750-1000)
+    if (performance >= eliteBenchmark) {
+      const excessRatio = (performance - eliteBenchmark) / eliteBenchmark;
+      return Math.min(1000, Math.round(750 + 250 * excessRatio));
+    }
+    
+    // User is between poor and elite, interpolate linearly (250-750)
+    const ratio = (performance - poorBenchmark) / (eliteBenchmark - poorBenchmark);
+    return Math.round(250 + 500 * ratio);
+  } else {
+    // For "lower is better" events (time) - flip the logic
+    // If user is at or above poor benchmark (slower), give them a low score (0-250)
+    if (performance >= poorBenchmark) {
+      return Math.max(0, Math.round(250 * (poorBenchmark / performance)));
+    }
+    
+    // If user is at or below elite benchmark (faster), give them a high score (750-1000)
+    if (performance <= eliteBenchmark) {
+      const excessRatio = (eliteBenchmark - performance) / eliteBenchmark;
+      return Math.min(1000, Math.round(750 + 250 * excessRatio));
+    }
+    
+    // User is between elite and poor, interpolate linearly (250-750)
+    const ratio = (poorBenchmark - performance) / (poorBenchmark - eliteBenchmark);
+    return Math.round(250 + 500 * ratio);
   }
-  
-  // If user is at or above elite benchmark, give them a high score (750-1000)
-  if (performance >= eliteBenchmark) {
-    const excessRatio = (performance - eliteBenchmark) / eliteBenchmark;
-    return Math.min(1000, Math.round(750 + 250 * excessRatio));
-  }
-  
-  // User is between poor and elite, interpolate linearly (250-750)
-  const ratio = (performance - poorBenchmark) / (eliteBenchmark - poorBenchmark);
-  return Math.round(250 + 500 * ratio);
 }
 
 // Fetch normalized scores for each domain for a user
@@ -185,12 +267,12 @@ export async function getUserDomainScores(userId: string, domainValues: string[]
   return scores;
 }
 
-// Helper function to get strength score for a specific user (for testing/debugging)
-export async function getUserStrengthScore(userId: string): Promise<number> {
-  return await getNormalizedDomainScore(userId, 'muscular-strength');
+// Helper function to get any domain score for a specific user (for testing/debugging)
+export async function getUserDomainScore(userId: string, domainValue: string): Promise<number> {
+  return await getNormalizedDomainScore(userId, domainValue);
 }
 
 // Helper function to calculate event score (exported for testing)
-export function calculateNormalizedEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number): number {
-  return calculateEventScore(userPerformance, poorBenchmark, eliteBenchmark);
+export function calculateNormalizedEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
+  return calculateEventScore(userPerformance, poorBenchmark, eliteBenchmark, higherIsBetter);
 } 

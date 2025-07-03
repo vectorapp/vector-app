@@ -61,5 +61,6 @@ export type SubmissionDto = {
   userId?: string;
   event?: string;
   rawValue?: string;
+  value?: number; // Computed numeric value for scoring
   unit?: string | null; // Allow null for Firestore compatibility
 }; 
