@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../model/types';
+import type { User, Gender } from '../model/types';
 import { DataService } from '../model/data/access';
 
 // --- AddModal and AdminTable components ---
@@ -161,6 +161,7 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
 }
 
 // Custom hook for Domain DataService operations
+/*
 function useDomainDataService() {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [loading, setLoading] = useState(true);
@@ -182,6 +183,7 @@ function useDomainDataService() {
   async function editDomain(id: string, data: Record<string, any>) { try { await DataService.updateDomain(id, { label: data.label, value: data.value, mobileLabel: data.mobileLabel }); fetchDomains(); } catch {} }
   return { items: domains.map(item => ({ ...item, id: item.id || item.value || item.label || '' })), loading, addItem: addDomain, removeItem: removeDomain, editItem: editDomain };
 }
+*/
 
 function useGenderDataService() {
   const [genders, setGenders] = useState<Gender[]>([]);
@@ -224,6 +226,7 @@ function useUserDataService() {
   return { items: users.map(item => ({ ...item, id: item.id || item.email || item.firstName || '' })), loading, addItem: addUser, removeItem: removeUser, editItem: editUser };
 }
 
+/*
 function useUnitDataService() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -283,20 +286,21 @@ function useEventDataService() {
   async function editEvent(id: string, data: Record<string, any>) { try { await DataService.updateEvent(id, { label: data.label, value: data.value, unitType: data.unitType, domain: data.domain, description: data.description }); fetchEvents(); } catch {} }
   return { items: events.map(event => ({ id: event.id || '', label: event.label, value: event.value, unitType: event.unitType.value, domain: event.domain.value, description: event.description })), loading, addItem: addEvent, removeItem: removeEvent, editItem: editEvent };
 }
+*/
 
 export default function AdminPanel() {
-  const domains = useDomainDataService();
-  const unitTypes = useUnitTypeDataService();
-  const units = useUnitDataService();
-  const events = useEventDataService();
+  // const domains = useDomainDataService();
+  // const unitTypes = useUnitTypeDataService();
+  // const units = useUnitDataService();
+  // const events = useEventDataService();
   const users = useUserDataService();
   const genders = useGenderDataService();
-  const ageGroups = useAgeGroupDataService();
+  // const ageGroups = useAgeGroupDataService();
 
   // Prepare options for dependency fields
-  const domainOptions = domains.items.map(d => ({ value: d.value, label: d.label }));
-  const unitTypeOptions = unitTypes.items.map(u => ({ value: u.value, label: u.label }));
-  const unitOptions = units.items.map(u => ({ value: u.value, label: u.label }));
+  // const domainOptions = domains.items.map(d => ({ value: d.value, label: d.label }));
+  // const unitTypeOptions = unitTypes.items.map(u => ({ value: u.value, label: u.label }));
+  // const unitOptions = units.items.map(u => ({ value: u.value, label: u.label }));
 
   // Responsive: Only show on large screens
   return (

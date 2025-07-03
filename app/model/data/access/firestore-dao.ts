@@ -15,11 +15,17 @@ import { db } from './firebase';
 import type { UserDao } from './dao';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
 import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto, EventDto, SubmissionDto } from '../transfer/dtos';
-import { GENDERS } from '../../types';
+import { GENDERS, DOMAINS } from '../../types';
 
 // Type guard for gender object
 function isGenderObject(g: any): g is { value: string } {
   return typeof g === 'object' && g !== null && 'value' in g;
+}
+
+// Helper to get domain logo from DOMAINS constant
+function getDomainLogo(domainValue: string): string {
+  const domain = DOMAINS.find(d => d.value === domainValue);
+  return domain?.logo || 'GiCog'; // Default fallback logo
 }
 
 // Base Firestore DAO implementation
@@ -117,8 +123,9 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
     if (dto.gender) {
       if (typeof dto.gender === 'string') {
         gender = GENDERS.find(g => g.value === dto.gender);
-      } else if (isGenderObject(dto.gender)) {
-        gender = GENDERS.find(g => g.value === dto.gender.value) || dto.gender;
+      } else if (typeof dto.gender === 'object' && dto.gender !== null && 'value' in dto.gender) {
+        // Safe to access value property since we've verified it exists
+        gender = GENDERS.find(g => g.value === (dto.gender as any).value) || dto.gender;
       }
     }
     const result = {
@@ -264,6 +271,7 @@ export class FirestoreDomainDao {
       label: domain.label,
       value: domain.value,
       mobileLabel: domain.mobileLabel || '',
+      logo: getDomainLogo(domain.value),
     };
   }
 
@@ -282,6 +290,7 @@ export class FirestoreDomainDao {
       label: data.label || '',
       value: data.value || '',
       mobileLabel: data.mobileLabel || '',
+      logo: getDomainLogo(data.value || ''),
     };
   }
 
@@ -305,6 +314,7 @@ export class FirestoreDomainDao {
       label: data.label || '',
       value: data.value || '',
       mobileLabel: data.mobileLabel || '',
+      logo: getDomainLogo(data.value || ''),
     };
   }
 
@@ -320,6 +330,7 @@ export class FirestoreDomainDao {
         label: data.label || '',
         value: data.value || '',
         mobileLabel: data.mobileLabel || '',
+        logo: getDomainLogo(data.value || ''),
       });
     });
 
