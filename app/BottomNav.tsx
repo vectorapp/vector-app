@@ -7,7 +7,7 @@ export default function BottomNav() {
   const pathname = usePathname();
   const navItems = [
     { href: '/', label: 'Feed', icon: FiHome },
-    { href: '/scalar', label: 'Scalar', icon: FiBarChart2 },
+    { href: '/insights', label: 'Insights', icon: FiBarChart2 },
     { href: '/leaderboard', label: 'Leaderboard', icon: FiAward },
     { href: '/profile', label: 'Profile', icon: FiUser },
   ];

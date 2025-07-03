@@ -96,16 +96,8 @@ export default function ScalarPage() {
     );
   }
 
-  // Use logo icons as labels (Chart.js only supports strings, so use emoji as placeholder)
-  const radarLabels = domains.map(d => {
-    // Option 1: Use emoji as placeholder for icon
-    // return '🔵';
-    // Option 2: Use the icon name as a string (will render as text)
-    return d.logo;
-    // Option 3: If Chart.js ever supports React nodes, use:
-    // const Icon = GiIcons[d.logo as keyof typeof GiIcons];
-    // return <Icon />;
-  });
+  // Use empty strings for radarLabels so Chart.js doesn't render text
+  const radarLabels = domains.map(() => '');
 
   // Radar chart data (use fetched scores)
   const radarData = {
@@ -155,13 +147,37 @@ export default function ScalarPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center w-full max-w-md">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Scalar</h1>
-        <div className="text-5xl font-extrabold text-blue-600 mb-2">0</div>
-        <div className="w-full flex justify-center mb-4">
-          <div className="w-72 h-72">
-            <Radar data={radarData} options={radarOptions} />
+      <div className="w-full max-w-md mx-auto pt-8 pb-12 px-4">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-6 text-center tracking-tight">Insights</h1>
+        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center">
+          <div className="w-full flex justify-center mb-4">
+            <div className="relative w-72 h-72">
+              <Radar data={radarData} options={radarOptions} />
+              {domains.map((d, i) => {
+                const angle = (i / domains.length) * 2 * Math.PI - Math.PI / 2;
+                const radius = 145; // push icons even further out from center
+                const center = 144; // 72*2=144, center of w-72
+                const x = Math.cos(angle) * radius + center;
+                const y = Math.sin(angle) * radius + center;
+                const Icon = GiIcons[d.logo as keyof typeof GiIcons];
+                return (
+                  <span
+                    key={d.value}
+                    style={{
+                      position: 'absolute',
+                      left: x,
+                      top: y,
+                      transform: 'translate(-50%, -50%)',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    {Icon && <Icon className="w-7 h-7 text-blue-500" />}
+                  </span>
+                );
+              })}
+            </div>
           </div>
+          {/* You can add more analytics widgets or summary stats here */}
         </div>
       </div>
     </div>

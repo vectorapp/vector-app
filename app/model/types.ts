@@ -65,12 +65,12 @@ export const DOMAINS = [
   {
     label: 'Agility & Coordination',
     value: 'agility-coordination',
-    logo: 'GiJumpingRope',
+    logo: 'GiBodyBalance',
   },
   {
     label: 'Anaerobic Power/Speed',
     value: 'anaerobic-power-speed',
-    logo: 'GiSprint',
+    logo: 'GiSpeedometer',
   },
   {
     label: 'Muscular Endurance',
@@ -80,7 +80,7 @@ export const DOMAINS = [
   {
     label: 'Muscular Strength',
     value: 'muscular-strength',
-    logo: 'GiWeightLiftingUp',
+    logo: 'GiBiceps',
   },
   {
     label: 'Olympic Lifting',
