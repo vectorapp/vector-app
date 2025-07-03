@@ -72,15 +72,9 @@ export default function ScalarPage() {
 
   // Get user's cohort
   useEffect(() => {
-    console.log('🔍 Debug: User data for cohort calculation:', user);
     if (user) {
-      console.log('🔍 Debug: User birthday:', user.birthday);
-      console.log('🔍 Debug: User gender:', user.gender);
       const cohort = getUserCohort(user);
-      console.log('🔍 Debug: Calculated cohort:', cohort);
       setUserCohort(cohort);
-    } else {
-      console.log('🔍 Debug: No user data available');
     }
   }, [user]);
 

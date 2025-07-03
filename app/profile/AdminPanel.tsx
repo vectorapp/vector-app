@@ -24,10 +24,7 @@ function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode =
   // Debug logging
   useEffect(() => {
     if (open) {
-      console.log('[AddModal] mode:', mode);
-      console.log('[AddModal] promptFields:', promptFields);
-      console.log('[AddModal] initialValues:', initialValues);
-      console.log('[AddModal] form state:', form);
+      // Debug logging removed
     }
   }, [open, mode, promptFields, initialValues, form]);
 
@@ -96,9 +93,6 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
       return item.description.length > 30 ? item.description.slice(0, 30) + '...' : item.description;
     }
     const value = item[field.key];
-    if (field.key === 'gender') {
-      console.log('[AdminTable] Rendering gender cell:', { item, field, value });
-    }
     if (field.key === 'gender' && value && typeof value === 'object') {
       return value.label || value.value || '';
     }
@@ -114,8 +108,7 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
   // Debug logging
   useEffect(() => {
     if (title === 'Domains') {
-      console.log('[AdminTable] Domains promptFields:', promptFields);
-      console.log('[AdminTable] Domains items:', items);
+      // Debug logging removed
     }
   }, [title, promptFields, items]);
 
