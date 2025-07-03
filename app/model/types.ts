@@ -230,6 +230,7 @@ export const GENDERS = [
 export type GenderValue = typeof GENDERS[number]['value'];
 
 export const AGE_GROUPS = [
+  { id: 'age_under_18', lowerBound: 0, upperBound: 17 },
   { id: 'age_18_29', lowerBound: 18, upperBound: 29 },
   { id: 'age_30_39', lowerBound: 30, upperBound: 39 },
   { id: 'age_40_49', lowerBound: 40, upperBound: 49 },
@@ -245,6 +246,7 @@ export type AgeGroupKey = `${typeof AGE_GROUPS[number]['lowerBound']}-${typeof A
 // Cohorts: all gender and age group permutations
 export const COHORTS = [
   // female
+  { key: 'female_under_18', gender: GENDERS.find(g => g.id === 'gender_female')!, age: AGE_GROUPS.find(a => a.id === 'age_under_18')! },
   { key: 'female_18_29', gender: GENDERS.find(g => g.id === 'gender_female')!, age: AGE_GROUPS.find(a => a.id === 'age_18_29')! },
   { key: 'female_30_39', gender: GENDERS.find(g => g.id === 'gender_female')!, age: AGE_GROUPS.find(a => a.id === 'age_30_39')! },
   { key: 'female_40_49', gender: GENDERS.find(g => g.id === 'gender_female')!, age: AGE_GROUPS.find(a => a.id === 'age_40_49')! },
@@ -254,6 +256,7 @@ export const COHORTS = [
   { key: 'female_80_89', gender: GENDERS.find(g => g.id === 'gender_female')!, age: AGE_GROUPS.find(a => a.id === 'age_80_89')! },
   { key: 'female_90_99', gender: GENDERS.find(g => g.id === 'gender_female')!, age: AGE_GROUPS.find(a => a.id === 'age_90_99')! },
   // male
+  { key: 'male_under_18', gender: GENDERS.find(g => g.id === 'gender_male')!, age: AGE_GROUPS.find(a => a.id === 'age_under_18')! },
   { key: 'male_18_29', gender: GENDERS.find(g => g.id === 'gender_male')!, age: AGE_GROUPS.find(a => a.id === 'age_18_29')! },
   { key: 'male_30_39', gender: GENDERS.find(g => g.id === 'gender_male')!, age: AGE_GROUPS.find(a => a.id === 'age_30_39')! },
   { key: 'male_40_49', gender: GENDERS.find(g => g.id === 'gender_male')!, age: AGE_GROUPS.find(a => a.id === 'age_40_49')! },
