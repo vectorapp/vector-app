@@ -9,21 +9,21 @@ console.log('🏋️ Testing "Higher is Better" Events (Weight, Reps, Calories):
 
 // Example: A 25-year-old male who deadlifts 400 lbs
 // Cohort: male_18_29 (Poor: 173 lb, Elite: 552 lb)
-// Expected Score: 250 + 500 * ((400-173)/(552-173)) = 549
+// Expected Score: ((400-173)/(552-173)) * 100 = 59.9
 
 const userPerformance = 400;
 const poorBenchmark = 173;
 const eliteBenchmark = 552;
 
 const calculatedScore = calculateNormalizedEventScore(userPerformance, poorBenchmark, eliteBenchmark, true);
-const expectedScore = 250 + 500 * ((400-173)/(552-173));
+const expectedScore = ((400-173)/(552-173)) * 100;
 
 console.log('📊 Test Case: 25-year-old male deadlifting 400 lbs');
 console.log('   Poor Benchmark: 173 lbs');
 console.log('   Elite Benchmark: 552 lbs');
 console.log('   User Performance: 400 lbs');
-console.log('   Expected Score: ' + Math.round(expectedScore));
-console.log('   Calculated Score: ' + calculatedScore);
+console.log('   Expected Score: ' + Math.round(expectedScore * 10) / 10);
+console.log('   Calculated Score: ' + Math.round(calculatedScore * 10) / 10);
 console.log('   ✅ Test ' + (Math.abs(calculatedScore - expectedScore) < 1 ? 'PASSED' : 'FAILED'));
 
 console.log('');
@@ -40,7 +40,7 @@ const higherBetterTestCases = [
 
 higherBetterTestCases.forEach(test => {
   const score = calculateNormalizedEventScore(test.perf, test.poor, test.elite, true);
-  console.log(`   ${test.desc}: ${test.perf} lbs → ${score}/1000`);
+  console.log(`   ${test.desc}: ${test.perf} lbs → ${Math.round(score * 10) / 10}/100`);
 });
 
 console.log('');
@@ -61,7 +61,7 @@ const lowerBetterTestCases = [
 console.log('🔍 "Lower is Better" Test Cases:');
 lowerBetterTestCases.forEach(test => {
   const score = calculateNormalizedEventScore(test.perf, test.poor, test.elite, false);
-  console.log(`   ${test.desc}: ${test.perf} seconds → ${score}/1000`);
+  console.log(`   ${test.desc}: ${test.perf} seconds → ${Math.round(score * 10) / 10}/100`);
 });
 
 console.log('');

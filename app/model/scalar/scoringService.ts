@@ -11,10 +11,10 @@ import { DataService } from '../data/access/service';
  * 1. COHORT MATCHING: Determines user's cohort based on age and gender
  * 2. BENCHMARK COMPARISON: Compares user's best performance in each domain event 
  *    to cohort-specific benchmarks
- * 3. SCORE CALCULATION: Uses a 0-1000 scale where:
- *    - 0-250: Below to at poor performance level
- *    - 250-750: Linear interpolation between poor and elite
- *    - 750-1000: At or above elite performance level
+ * 3. SCORE CALCULATION: Uses a 0-100 linear scale where:
+ *    - 0: At poor performance level
+ *    - 100: At elite performance level
+ *    - Linear interpolation between poor and elite performance levels
  * 4. DOMAIN SCORE: Averages scores across all completed events in the domain
  * 
  * EVENT TYPES:
@@ -23,7 +23,7 @@ import { DataService } from '../data/access/service';
  * 
  * Example: A 25-year-old male who deadlifts 400 lbs:
  * - Cohort: male_18_29 (Poor: 173 lb, Elite: 552 lb)
- * - Score: 250 + 500 * ((400-173)/(552-173)) = 549/1000
+ * - Score: ((400-173)/(552-173)) * 100 = 59.9/100
  */
 
 // Utility: Determine if an event is "higher is better" or "lower is better"
@@ -205,7 +205,7 @@ function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainV
     
     console.log(`🏃 ${eventValue} benchmarks - Poor: ${cohortBenchmarks.poor}, Elite: ${cohortBenchmarks.elite}`);
     
-    // Calculate normalized score (0-1000 scale)
+    // Calculate normalized score (0-100 scale)
     const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.poor, cohortBenchmarks.elite, higherIsBetter);
     console.log(`🏃 ${eventValue} normalized score: ${score}`);
     eventScores.push(score);
@@ -218,44 +218,27 @@ function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainV
   return finalScore;
 }
 
-// Calculate individual event score based on performance vs benchmarks
+// Calculate individual event score using linear normalization (0-100 scale)
 function calculateEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
-  // Clamp performance to reasonable bounds
-  const performance = Math.max(0, userPerformance);
-  
-  if (higherIsBetter) {
+  return normalizeScore(userPerformance, poorBenchmark, eliteBenchmark, higherIsBetter ? "higher" : "lower");
+}
+
+// Linear normalization function for 0-100 scale
+function normalizeScore(value: number, min: number, elite: number, direction: "higher" | "lower"): number {
+  // Safeguard against division by zero
+  if (elite === min) return 100;
+
+  let score: number;
+  if (direction === "higher") {
     // For "higher is better" events (weight, reps, calories)
-    // If user is at or below poor benchmark, give them a low score (0-250)
-    if (performance <= poorBenchmark) {
-      return Math.max(0, Math.round(250 * (performance / poorBenchmark)));
-    }
-    
-    // If user is at or above elite benchmark, give them a high score (750-1000)
-    if (performance >= eliteBenchmark) {
-      const excessRatio = (performance - eliteBenchmark) / eliteBenchmark;
-      return Math.min(1000, Math.round(750 + 250 * excessRatio));
-    }
-    
-    // User is between poor and elite, interpolate linearly (250-750)
-    const ratio = (performance - poorBenchmark) / (eliteBenchmark - poorBenchmark);
-    return Math.round(250 + 500 * ratio);
+    score = ((value - min) / (elite - min)) * 100;
   } else {
     // For "lower is better" events (time) - flip the logic
-    // If user is at or above poor benchmark (slower), give them a low score (0-250)
-    if (performance >= poorBenchmark) {
-      return Math.max(0, Math.round(250 * (poorBenchmark / performance)));
-    }
-    
-    // If user is at or below elite benchmark (faster), give them a high score (750-1000)
-    if (performance <= eliteBenchmark) {
-      const excessRatio = (eliteBenchmark - performance) / eliteBenchmark;
-      return Math.min(1000, Math.round(750 + 250 * excessRatio));
-    }
-    
-    // User is between elite and poor, interpolate linearly (250-750)
-    const ratio = (poorBenchmark - performance) / (poorBenchmark - eliteBenchmark);
-    return Math.round(250 + 500 * ratio);
+    score = ((elite - value) / (elite - min)) * 100;
   }
+
+  // Clamp result to [0, 100] range
+  return Math.max(0, Math.min(100, score));
 }
 
 // Fetch normalized scores for each domain for a user

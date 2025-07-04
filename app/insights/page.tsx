@@ -164,8 +164,8 @@ export default function ScalarPage() {
     ],
   };
 
-  // Dynamically set max to the largest normalized value (or 1 if all are zero)
-  const maxScore = Math.max(1, ...Object.values(domainScores));
+  // Fixed max of 100 for the new 0-100 scoring scale
+  const maxScore = 100;
   
   // Debug logging for chart data
   console.log('🔍 [Insights] Chart data being rendered:', {
@@ -186,7 +186,7 @@ export default function ScalarPage() {
         min: 0,
         max: maxScore,
         ticks: {
-          stepSize: 250,
+          stepSize: 20,
           color: '#6B7280', // gray-500
         },
         pointLabels: {
@@ -274,7 +274,7 @@ export default function ScalarPage() {
                 {domains.map(domain => (
                   <div key={domain.value} className="flex justify-between">
                     <span>{domain.label}:</span>
-                    <span className="font-mono">{domainScores[domain.value] ?? 0}/1000</span>
+                    <span className="font-mono">{Math.round((domainScores[domain.value] ?? 0) * 10) / 10}/100</span>
                   </div>
                 ))}
               </div>
