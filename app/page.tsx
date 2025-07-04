@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import TimePicker from 'react-time-picker';
-import 'react-time-picker/dist/TimePicker.css';
-import 'react-clock/dist/Clock.css';
+// TimePicker removed - using text input instead for better reliability
 import { FiThumbsUp, FiMessageCircle, FiShare } from 'react-icons/fi';
 import { GiJumpingRope, GiSprint, GiStairsGoal, GiWeightLiftingUp, GiPathDistance } from 'react-icons/gi';
 import { FaDumbbell, FaRunning, FaBolt, FaHeartbeat, FaRoad } from 'react-icons/fa';
@@ -13,10 +11,20 @@ import { useUser } from './model/auth/UserContext';
 import { useRouter } from 'next/navigation';
 import * as GiIcons from 'react-icons/gi';
 
-// Helper to convert HH:MM:SS to seconds
+// Helper to convert HH:MM:SS to seconds (robust for various input formats)
 function timeStringToSeconds(time: string): number {
-  const [h = '0', m = '0', s = '0'] = time.split(":");
-  return parseInt(h) * 3600 + parseInt(m) * 60 + parseInt(s);
+  if (!time) return 0;
+  
+  // Clean the input and split by colons
+  const parts = time.trim().split(":");
+  const [h = '0', m = '0', s = '0'] = parts;
+  
+  // Parse and validate each part
+  const hours = Math.max(0, parseInt(h) || 0);
+  const minutes = Math.max(0, Math.min(59, parseInt(m) || 0));
+  const seconds = Math.max(0, Math.min(59, parseInt(s) || 0));
+  
+  return hours * 3600 + minutes * 60 + seconds;
 }
 
 // Helper to format date
@@ -179,10 +187,13 @@ export default function Home() {
     let selectedUnit: Unit | null = null;
     
     if (currentUnitType?.value === "time") {
-      // For timed events, use the TimePicker value
-      rawValue = timedEventValue || "00:00:00";
+      // For timed events, use the TimePicker value and ensure proper format
+      const timeValue = timedEventValue || "00:00:00";
+      // Ensure we always have HH:MM:SS format (TimePicker sometimes returns HH:MM)
+      rawValue = timeValue.split(':').length === 2 ? `${timeValue}:00` : timeValue;
       value = timeStringToSeconds(rawValue);
-      selectedUnit = null;
+      // Set unit to "seconds" since value is always stored in seconds for time events
+      selectedUnit = units.find(u => u.value === 'seconds') || null;
     } else {
       // For other events, use the number input value
       rawValue = eventValue;
@@ -292,15 +303,24 @@ export default function Home() {
                   {currentUnitType?.value === "time" ? "Time" : "Value"}
                 </label>
                 {currentUnitType?.value === "time" ? (
-                  <TimePicker
-                    onChange={setTimedEventValue}
-                    value={timedEventValue}
-                    format="HH:mm:ss"
-                    disableClock
-                    clearIcon={null}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  <input
+                    type="text"
+                    value={timedEventValue || ""}
+                    onChange={(e) => setTimedEventValue(e.target.value)}
+                    placeholder="HH:MM:SS (e.g., 00:27:30)"
+                    pattern="^([0-9]|[0-5][0-9]):([0-5]?[0-9]):([0-5]?[0-9])$"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-mono"
                     required
                     disabled={!user}
+                    onBlur={(e) => {
+                      // Auto-format the time on blur
+                      const value = e.target.value;
+                      if (value && value.match(/^\d{1,2}:\d{1,2}:\d{1,2}$/)) {
+                        const parts = value.split(':');
+                        const formatted = parts.map(part => part.padStart(2, '0')).join(':');
+                        setTimedEventValue(formatted);
+                      }
+                    }}
                   />
                 ) : (
                   <input
