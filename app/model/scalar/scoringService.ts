@@ -204,10 +204,15 @@ function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainV
     }
     
     console.log(`🏃 ${eventValue} benchmarks - Poor: ${cohortBenchmarks.poor}, Elite: ${cohortBenchmarks.elite}`);
+    console.log(`🏃 ${eventValue} scoring direction: ${higherIsBetter ? 'higher is better' : 'lower is better'}`);
     
     // Calculate normalized score (0-100 scale)
     const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.poor, cohortBenchmarks.elite, higherIsBetter);
-    console.log(`🏃 ${eventValue} normalized score: ${score}`);
+    console.log(`🏃 ${eventValue} normalized score calculation:`);
+    console.log(`🏃   User performance: ${bestSubmission.value}${bestSubmission.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Poor benchmark: ${cohortBenchmarks.poor}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Elite benchmark: ${cohortBenchmarks.elite}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Final score: ${score}/100`);
     eventScores.push(score);
   }
   
@@ -224,17 +229,19 @@ function calculateEventScore(userPerformance: number, poorBenchmark: number, eli
 }
 
 // Linear normalization function for 0-100 scale
-function normalizeScore(value: number, min: number, elite: number, direction: "higher" | "lower"): number {
+function normalizeScore(value: number, poorBenchmark: number, eliteBenchmark: number, direction: "higher" | "lower"): number {
   // Safeguard against division by zero
-  if (elite === min) return 100;
+  if (eliteBenchmark === poorBenchmark) return 100;
 
   let score: number;
   if (direction === "higher") {
     // For "higher is better" events (weight, reps, calories)
-    score = ((value - min) / (elite - min)) * 100;
+    // poorBenchmark is the lower value, eliteBenchmark is the higher value
+    score = ((value - poorBenchmark) / (eliteBenchmark - poorBenchmark)) * 100;
   } else {
-    // For "lower is better" events (time) - flip the logic
-    score = ((elite - value) / (elite - min)) * 100;
+    // For "lower is better" events (time)
+    // poorBenchmark is the higher (slower) time, eliteBenchmark is the lower (faster) time
+    score = ((poorBenchmark - value) / (poorBenchmark - eliteBenchmark)) * 100;
   }
 
   // Clamp result to [0, 100] range

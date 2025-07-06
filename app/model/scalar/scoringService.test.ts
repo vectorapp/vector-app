@@ -46,22 +46,25 @@ higherBetterTestCases.forEach(test => {
 console.log('');
 console.log('⏱️ Testing "Lower is Better" Events (Time):');
 
-// Example: A runner who completes 5K in 20:00 (1200 seconds)
-// Cohort example: (Poor: 1800 seconds, Elite: 900 seconds)
-// For time events, lower is better, so we flip the logic
+// Example: 5K run times using realistic benchmarks
+// Female 18-29: Poor: 1567s (26:07), Elite: 1247s (20:47)
 
 const lowerBetterTestCases = [
-  { perf: 2000, poor: 1800, elite: 900, desc: 'Slower than poor performance' },
-  { perf: 1800, poor: 1800, elite: 900, desc: 'At poor performance' },
-  { perf: 1350, poor: 1800, elite: 900, desc: 'Midpoint between poor and elite' },
-  { perf: 900, poor: 1800, elite: 900, desc: 'At elite performance' },
-  { perf: 700, poor: 1800, elite: 900, desc: 'Faster than elite performance' },
+  { perf: 1700, poor: 1567, elite: 1247, desc: 'Slower than poor performance (28:20)' },
+  { perf: 1567, poor: 1567, elite: 1247, desc: 'At poor performance (26:07)' },
+  { perf: 1407, poor: 1567, elite: 1247, desc: 'Midpoint between poor and elite (23:27)' },
+  { perf: 1247, poor: 1567, elite: 1247, desc: 'At elite performance (20:47)' },
+  { perf: 1100, poor: 1567, elite: 1247, desc: 'Faster than elite performance (18:20)' },
+  // Real user case that was broken:
+  { perf: 1653, poor: 1567, elite: 1247, desc: 'User case: 27:33 (should be low score)' },
 ];
 
-console.log('🔍 "Lower is Better" Test Cases:');
+console.log('🔍 "Lower is Better" Test Cases (5K Run):');
 lowerBetterTestCases.forEach(test => {
   const score = calculateNormalizedEventScore(test.perf, test.poor, test.elite, false);
-  console.log(`   ${test.desc}: ${test.perf} seconds → ${Math.round(score * 10) / 10}/100`);
+  const minutes = Math.floor(test.perf / 60);
+  const seconds = test.perf % 60;
+  console.log(`   ${test.desc}: ${minutes}:${seconds.toString().padStart(2, '0')} → ${Math.round(score * 10) / 10}/100`);
 });
 
 console.log('');
