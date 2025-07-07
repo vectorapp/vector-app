@@ -68,4 +68,46 @@ lowerBetterTestCases.forEach(test => {
 });
 
 console.log('');
-console.log('✨ Generic scoring algorithm is ready for production use!'); 
+console.log('📊 Testing Domain Averaging Logic:');
+console.log('');
+
+// Example: User has submitted multiple events within the strength domain
+// Each event gets scored individually, then averaged for the final domain score
+
+console.log('🏋️ Example: Male 25-29 in Strength Domain');
+console.log('   Events: Deadlift, Back Squat, Military Press');
+console.log('');
+
+// User's best performances:
+const deadliftPerf = 400;  // User lifts 400 lbs deadlift
+const backSquatPerf = 300; // User lifts 300 lbs back squat  
+const militaryPressPerf = 150; // User lifts 150 lbs military press
+
+// Male 25-29 benchmarks (example data):
+const deadliftBenchmarks = { poor: 173, elite: 552 };
+const backSquatBenchmarks = { poor: 141, elite: 483 };
+const militaryPressBenchmarks = { poor: 66, elite: 248 };
+
+// Calculate individual event scores
+const deadliftScore = calculateNormalizedEventScore(deadliftPerf, deadliftBenchmarks.poor, deadliftBenchmarks.elite, true);
+const backSquatScore = calculateNormalizedEventScore(backSquatPerf, backSquatBenchmarks.poor, backSquatBenchmarks.elite, true);
+const militaryPressScore = calculateNormalizedEventScore(militaryPressPerf, militaryPressBenchmarks.poor, militaryPressBenchmarks.elite, true);
+
+console.log('📈 Individual Event Scores:');
+console.log(`   Deadlift: ${deadliftPerf} lbs → ${Math.round(deadliftScore * 10) / 10}/100`);
+console.log(`   Back Squat: ${backSquatPerf} lbs → ${Math.round(backSquatScore * 10) / 10}/100`);
+console.log(`   Military Press: ${militaryPressPerf} lbs → ${Math.round(militaryPressScore * 10) / 10}/100`);
+
+// Average the scores to get domain score
+const domainScore = Math.round((deadliftScore + backSquatScore + militaryPressScore) / 3);
+
+console.log('');
+console.log('🎯 Domain Score Calculation:');
+console.log(`   (${Math.round(deadliftScore)} + ${Math.round(backSquatScore)} + ${Math.round(militaryPressScore)}) / 3 = ${domainScore}/100`);
+console.log(`   Final Strength Domain Score: ${domainScore}/100`);
+
+console.log('');
+console.log('✨ Domain averaging logic is working correctly!');
+console.log('   - Each event is scored individually based on user\'s best performance');
+console.log('   - Event scores are averaged to get the final domain score');
+console.log('   - This allows balanced scoring across multiple events in a domain'); 

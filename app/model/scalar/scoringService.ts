@@ -148,11 +148,12 @@ export async function getNormalizedDomainScore(userId: string, domainValue: stri
 function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainValue: string): number {
   // Get all unique events in this domain from submissions
   const uniqueEvents = Array.from(new Set(submissions.map(s => s.event.value)));
-  const eventScores: number[] = [];
+  const eventScores: { event: string, score: number }[] = [];
   
-  console.log(`🏃 Calculating ${domainValue} score for cohort:`, cohort.key);
+  console.log(`🏃 Calculating ${domainValue} domain score for cohort:`, cohort.key);
   console.log(`🏃 Total domain submissions:`, submissions.length);
-  console.log(`🏃 Unique events in domain:`, uniqueEvents);
+  console.log(`🏃 Unique events in domain: [${uniqueEvents.join(', ')}]`);
+  console.log(`🏃 Will find best performance for each event and average their normalized scores`);
   
   for (const eventValue of uniqueEvents) {
     // Get user's submissions for this event
@@ -213,11 +214,25 @@ function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainV
     console.log(`🏃   Poor benchmark: ${cohortBenchmarks.poor}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
     console.log(`🏃   Elite benchmark: ${cohortBenchmarks.elite}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
     console.log(`🏃   Final score: ${score}/100`);
-    eventScores.push(score);
+    eventScores.push({ event: eventValue, score });
   }
   
-  const finalScore = eventScores.length > 0 ? Math.round(eventScores.reduce((sum, score) => sum + score, 0) / eventScores.length) : 0;
-  console.log(`🏃 Final ${domainValue} domain score:`, finalScore);
+  // Calculate average score across all events in the domain
+  if (eventScores.length === 0) {
+    console.log(`🏃 No valid event scores found for ${domainValue} domain`);
+    return 0;
+  }
+  
+  console.log(`🏃 Event scores for ${domainValue} domain:`);
+  eventScores.forEach(({ event, score }) => {
+    console.log(`🏃   ${event}: ${score}/100`);
+  });
+  
+  const totalScore = eventScores.reduce((sum, { score }) => sum + score, 0);
+  const finalScore = Math.round(totalScore / eventScores.length);
+  
+  console.log(`🏃 Domain score calculation: (${eventScores.map(e => e.score).join(' + ')}) / ${eventScores.length} = ${finalScore}/100`);
+  console.log(`🏃 Final ${domainValue} domain score: ${finalScore}/100`);
   
   // Return average score if we have any event scores, otherwise 0
   return finalScore;
