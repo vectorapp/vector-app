@@ -12,9 +12,9 @@ import { DataService } from '../data/access/service';
  * 2. BENCHMARK COMPARISON: Compares user's best performance in each domain event 
  *    to cohort-specific benchmarks
  * 3. SCORE CALCULATION: Uses a 0-100 linear scale where:
- *    - 0: At poor performance level
+ *    - 0: At foundational performance level
  *    - 100: At elite performance level
- *    - Linear interpolation between poor and elite performance levels
+ *    - Linear interpolation between foundational and elite performance levels
  * 4. DOMAIN SCORE: Averages scores across all completed events in the domain
  * 
  * EVENT TYPES:
@@ -22,7 +22,7 @@ import { DataService } from '../data/access/service';
  * - "Lower is better" (time): Less is better (faster times)
  * 
  * Example: A 25-year-old male who deadlifts 400 lbs:
- * - Cohort: male_18_29 (Poor: 173 lb, Elite: 552 lb)
+ * - Cohort: male_18_29 (Foundational: 173 lb, Elite: 552 lb)
  * - Score: ((400-173)/(552-173)) * 100 = 59.9/100
  */
 
@@ -204,14 +204,14 @@ function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainV
       continue; // Skip if no cohort benchmarks available
     }
     
-    console.log(`🏃 ${eventValue} benchmarks - Poor: ${cohortBenchmarks.poor}, Elite: ${cohortBenchmarks.elite}`);
+    console.log(`🏃 ${eventValue} benchmarks - Foundational: ${cohortBenchmarks.foundational}, Elite: ${cohortBenchmarks.elite}`);
     console.log(`🏃 ${eventValue} scoring direction: ${higherIsBetter ? 'higher is better' : 'lower is better'}`);
     
     // Calculate normalized score (0-100 scale)
-    const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.poor, cohortBenchmarks.elite, higherIsBetter);
+    const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.foundational, cohortBenchmarks.elite, higherIsBetter);
     console.log(`🏃 ${eventValue} normalized score calculation:`);
     console.log(`🏃   User performance: ${bestSubmission.value}${bestSubmission.unit?.value === 'seconds' ? 's' : ''}`);
-    console.log(`🏃   Poor benchmark: ${cohortBenchmarks.poor}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Foundational benchmark: ${cohortBenchmarks.foundational}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
     console.log(`🏃   Elite benchmark: ${cohortBenchmarks.elite}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
     console.log(`🏃   Final score: ${score}/100`);
     eventScores.push({ event: eventValue, score });
@@ -239,24 +239,24 @@ function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainV
 }
 
 // Calculate individual event score using linear normalization (0-100 scale)
-function calculateEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
-  return normalizeScore(userPerformance, poorBenchmark, eliteBenchmark, higherIsBetter ? "higher" : "lower");
+function calculateEventScore(userPerformance: number, foundationalBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
+  return normalizeScore(userPerformance, foundationalBenchmark, eliteBenchmark, higherIsBetter ? "higher" : "lower");
 }
 
 // Linear normalization function for 0-100 scale
-function normalizeScore(value: number, poorBenchmark: number, eliteBenchmark: number, direction: "higher" | "lower"): number {
+function normalizeScore(value: number, foundationalBenchmark: number, eliteBenchmark: number, direction: "higher" | "lower"): number {
   // Safeguard against division by zero
-  if (eliteBenchmark === poorBenchmark) return 100;
+  if (eliteBenchmark === foundationalBenchmark) return 100;
 
   let score: number;
   if (direction === "higher") {
     // For "higher is better" events (weight, reps, calories)
-    // poorBenchmark is the lower value, eliteBenchmark is the higher value
-    score = ((value - poorBenchmark) / (eliteBenchmark - poorBenchmark)) * 100;
+    // foundationalBenchmark is the lower value, eliteBenchmark is the higher value
+    score = ((value - foundationalBenchmark) / (eliteBenchmark - foundationalBenchmark)) * 100;
   } else {
     // For "lower is better" events (time)
-    // poorBenchmark is the higher (slower) time, eliteBenchmark is the lower (faster) time
-    score = ((poorBenchmark - value) / (poorBenchmark - eliteBenchmark)) * 100;
+    // foundationalBenchmark is the higher (slower) time, eliteBenchmark is the lower (faster) time
+    score = ((foundationalBenchmark - value) / (foundationalBenchmark - eliteBenchmark)) * 100;
   }
 
   // Clamp result to [0, 100] range
@@ -278,6 +278,6 @@ export async function getUserDomainScore(userId: string, domainValue: string): P
 }
 
 // Helper function to calculate event score (exported for testing)
-export function calculateNormalizedEventScore(userPerformance: number, poorBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
-  return calculateEventScore(userPerformance, poorBenchmark, eliteBenchmark, higherIsBetter);
+export function calculateNormalizedEventScore(userPerformance: number, foundationalBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
+  return calculateEventScore(userPerformance, foundationalBenchmark, eliteBenchmark, higherIsBetter);
 } 

@@ -173,7 +173,7 @@ export default function ScalarPage() {
                 const cohortBenchmarks = eventBenchmarks[userCohort.key as keyof typeof eventBenchmarks];
                 const score = calculateNormalizedEventScore(
                   bestSubmission.value,
-                  cohortBenchmarks.poor,
+                  cohortBenchmarks.foundational,
                   cohortBenchmarks.elite,
                   higherIsBetter
                 );
@@ -187,7 +187,7 @@ export default function ScalarPage() {
                   userRawValue: bestSubmission.rawValue,
                   unit: bestSubmission.unit?.label || 'time',
                   unitValue: bestSubmission.unit?.value || 'seconds',
-                  poorBenchmark: cohortBenchmarks.poor,
+                  foundationalBenchmark: cohortBenchmarks.foundational,
                   eliteBenchmark: cohortBenchmarks.elite,
                   benchmarkUnit: cohortBenchmarks.unit.label,
                   score: Math.round(score),
@@ -401,9 +401,9 @@ export default function ScalarPage() {
                                 </div>
                                 <div className="flex items-center space-x-4 text-xs text-gray-500">
                                   <span>
-                                    Poor: {performance.unitValue === 'seconds' ? 
-                                      formatTime(performance.poorBenchmark) : 
-                                      `${performance.poorBenchmark} ${performance.benchmarkUnit}`
+                                    Foundational: {performance.unitValue === 'seconds' ? 
+                                      formatTime(performance.foundationalBenchmark) : 
+                                      `${performance.foundationalBenchmark} ${performance.benchmarkUnit}`
                                     }
                                   </span>
                                   <span>
