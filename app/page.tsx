@@ -118,7 +118,9 @@ export default function Home() {
         setEvents(eventsData);
         setUnits(unitsData);
         setUnitTypes(unitTypesData);
-        setDomains(domainsData);
+        // Temporarily hide Agility/Coordination domain until events are defined
+        const filteredDomains = domainsData.filter(domain => domain.value !== 'agility-coordination');
+        setDomains(filteredDomains);
         
         setEventsLoading(false);
         setUnitsLoading(false);

@@ -59,7 +59,9 @@ export default function ScalarPage() {
       setDomainsLoading(true);
       try {
         const fetchedDomains = await DataService.getAllDomains();
-        setDomains(fetchedDomains);
+        // Temporarily hide Agility/Coordination domain until events are defined
+        const filteredDomains = fetchedDomains.filter(domain => domain.value !== 'agility-coordination');
+        setDomains(filteredDomains);
       } catch (error) {
         setDomains([]);
       }
@@ -362,10 +364,23 @@ export default function ScalarPage() {
           
           {performanceData.length > 0 ? (
             <div className="space-y-4">
-              {/* Group by domain */}
-              {domains.map(domain => {
+              {/* Group by domain - sorted by score (highest first, no events last) */}
+              {domains
+                .sort((a, b) => {
+                  const scoreA = domainScores[a.value] ?? 0;
+                  const scoreB = domainScores[b.value] ?? 0;
+                  const hasEventsA = performanceData.some(p => p.domainValue === a.value);
+                  const hasEventsB = performanceData.some(p => p.domainValue === b.value);
+                  
+                  // If one has events and the other doesn't, prioritize the one with events
+                  if (hasEventsA && !hasEventsB) return -1;
+                  if (!hasEventsA && hasEventsB) return 1;
+                  
+                  // If both have events or both don't have events, sort by score (descending)
+                  return scoreB - scoreA;
+                })
+                .map(domain => {
                 const domainPerformances = performanceData.filter(p => p.domainValue === domain.value);
-                if (domainPerformances.length === 0) return null;
                 
                 return (
                   <div key={domain.value} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -383,8 +398,26 @@ export default function ScalarPage() {
                       </div>
                     </div>
                     
-                    <div className="divide-y divide-gray-200">
-                      {domainPerformances.map((performance, index) => (
+                    {domainPerformances.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <div className="text-gray-400 mb-2">
+                          {GiIcons[domain.logo as keyof typeof GiIcons] && (
+                            <span className="inline-block">
+                              {React.createElement(GiIcons[domain.logo as keyof typeof GiIcons], { className: "w-12 h-12 mx-auto mb-3 opacity-50" })}
+                            </span>
+                          )}
+                        </div>
+                        <h5 className="text-gray-900 font-medium mb-1">No performances yet</h5>
+                        <p className="text-sm text-gray-500 mb-3">
+                          You haven't submitted any performances for {domain.label.toLowerCase()} events yet.
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Submit new performances to improve your score and see your progress here!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-200">
+                        {domainPerformances.map((performance, index) => (
                         <div key={`${performance.eventValue}-${index}`} className="p-4">
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex-1">
@@ -443,7 +476,8 @@ export default function ScalarPage() {
                           </div>
                         </div>
                       ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
