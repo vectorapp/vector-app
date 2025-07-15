@@ -260,8 +260,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto p-6">
-        {/* Plain Feed Header */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Feed</h1>
 
         {/* Social Media Style New Post Input */}
         {!showNewPostForm && (

@@ -1,5 +1,5 @@
 'use client';
-import { FiHome, FiBarChart2, FiAward, FiUser } from 'react-icons/fi';
+import { FiHome, FiBarChart2, FiAward, FiClipboard } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -9,7 +9,7 @@ export default function BottomNav() {
     { href: '/', label: 'Feed', icon: FiHome },
     { href: '/insights', label: 'Insights', icon: FiBarChart2 },
     { href: '/leaderboard', label: 'Leaderboard', icon: FiAward },
-    { href: '/profile', label: 'Profile', icon: FiUser },
+    { href: '/coaching', label: 'Coaching', icon: FiClipboard },
   ];
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow flex justify-around items-center h-16">

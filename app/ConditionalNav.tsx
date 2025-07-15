@@ -1,6 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import BottomNav from './BottomNav';
+import TopNav from './TopNav';
 
 export default function ConditionalNav() {
   const pathname = usePathname();
@@ -10,5 +11,10 @@ export default function ConditionalNav() {
     return null;
   }
   
-  return <BottomNav />;
+  return (
+    <>
+      <TopNav />
+      <BottomNav />
+    </>
+  );
 } 

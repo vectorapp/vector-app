@@ -28,9 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
-        {/* Top nav removed for bottom nav prep */}
         <UserProvider>
-          {children}
+          <div className="pt-14">
+            {children}
+          </div>
         </UserProvider>
         <ConditionalNav />
       </body>
