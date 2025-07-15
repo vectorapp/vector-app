@@ -20,6 +20,7 @@ export type DomainDto = {
   createdAt?: any; // Firestore Timestamp or Date
   label?: string;
   value?: string;
+  mobileLabel?: string;
 };
 
 export type UnitDto = {
@@ -60,5 +61,6 @@ export type SubmissionDto = {
   userId?: string;
   event?: string;
   rawValue?: string;
+  value?: number; // Computed numeric value for scoring
   unit?: string | null; // Allow null for Firestore compatibility
 }; 

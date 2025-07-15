@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event } from '../model/types';
+import type { User, Gender } from '../model/types';
 import { DataService } from '../model/data/access';
 
 // --- AddModal and AdminTable components ---
@@ -20,6 +20,14 @@ function AddModal({ open, onClose, onSubmit, promptFields, initialValues, mode =
 }) {
   const [form, setForm] = useState<Record<string, any>>(initialValues || {});
   useEffect(() => { if (open) setForm(initialValues || {}); }, [open, initialValues]);
+
+  // Debug logging
+  useEffect(() => {
+    if (open) {
+      // Debug logging removed
+    }
+  }, [open, mode, promptFields, initialValues, form]);
+
   return open ? (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
       <div className="bg-white p-6 rounded shadow-lg min-w-[300px]">
@@ -85,6 +93,9 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
       return item.description.length > 30 ? item.description.slice(0, 30) + '...' : item.description;
     }
     const value = item[field.key];
+    if (field.key === 'gender' && value && typeof value === 'object') {
+      return value.label || value.value || '';
+    }
     if (typeof value === 'object' && value !== null) {
       if (Array.isArray(value)) {
         return value.map(v => (typeof v === 'object' && v !== null ? v.label || v.value || JSON.stringify(v) : v)).join(', ');
@@ -93,6 +104,14 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
     }
     return value;
   }
+
+  // Debug logging
+  useEffect(() => {
+    if (title === 'Domains') {
+      // Debug logging removed
+    }
+  }, [title, promptFields, items]);
+
   return (
     <div className="mb-10">
       <div className="flex justify-between items-center mb-2">
@@ -135,6 +154,7 @@ function AdminTable({ title, items, loading, onAdd, onDelete, onEdit, promptFiel
 }
 
 // Custom hook for Domain DataService operations
+/*
 function useDomainDataService() {
   const [domains, setDomains] = useState<Domain[]>([]);
   const [loading, setLoading] = useState(true);
@@ -150,12 +170,13 @@ function useDomainDataService() {
   }
   useEffect(() => { fetchDomains(); }, []);
   async function addDomain(data: Record<string, any>) {
-    try { await DataService.createDomain({ label: data.label, value: data.value }); fetchDomains(); } catch {}
+    try { await DataService.createDomain({ label: data.label, value: data.value, mobileLabel: data.mobileLabel }); fetchDomains(); } catch {}
   }
   async function removeDomain(id: string) { try { await DataService.deleteDomain(id); fetchDomains(); } catch {} }
-  async function editDomain(id: string, data: Record<string, any>) { try { await DataService.updateDomain(id, { label: data.label, value: data.value }); fetchDomains(); } catch {} }
+  async function editDomain(id: string, data: Record<string, any>) { try { await DataService.updateDomain(id, { label: data.label, value: data.value, mobileLabel: data.mobileLabel }); fetchDomains(); } catch {} }
   return { items: domains.map(item => ({ ...item, id: item.id || item.value || item.label || '' })), loading, addItem: addDomain, removeItem: removeDomain, editItem: editDomain };
 }
+*/
 
 function useGenderDataService() {
   const [genders, setGenders] = useState<Gender[]>([]);
@@ -198,6 +219,7 @@ function useUserDataService() {
   return { items: users.map(item => ({ ...item, id: item.id || item.email || item.firstName || '' })), loading, addItem: addUser, removeItem: removeUser, editItem: editUser };
 }
 
+/*
 function useUnitDataService() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -257,29 +279,28 @@ function useEventDataService() {
   async function editEvent(id: string, data: Record<string, any>) { try { await DataService.updateEvent(id, { label: data.label, value: data.value, unitType: data.unitType, domain: data.domain, description: data.description }); fetchEvents(); } catch {} }
   return { items: events.map(event => ({ id: event.id || '', label: event.label, value: event.value, unitType: event.unitType.value, domain: event.domain.value, description: event.description })), loading, addItem: addEvent, removeItem: removeEvent, editItem: editEvent };
 }
+*/
 
 export default function AdminPanel() {
-  const domains = useDomainDataService();
-  const unitTypes = useUnitTypeDataService();
-  const units = useUnitDataService();
-  const events = useEventDataService();
+  // const domains = useDomainDataService();
+  // const unitTypes = useUnitTypeDataService();
+  // const units = useUnitDataService();
+  // const events = useEventDataService();
   const users = useUserDataService();
   const genders = useGenderDataService();
-  const ageGroups = useAgeGroupDataService();
+  // const ageGroups = useAgeGroupDataService();
 
   // Prepare options for dependency fields
-  const domainOptions = domains.items.map(d => ({ value: d.value, label: d.label }));
-  const unitTypeOptions = unitTypes.items.map(u => ({ value: u.value, label: u.label }));
-  const unitOptions = units.items.map(u => ({ value: u.value, label: u.label }));
+  // const domainOptions = domains.items.map(d => ({ value: d.value, label: d.label }));
+  // const unitTypeOptions = unitTypes.items.map(u => ({ value: u.value, label: u.label }));
+  // const unitOptions = units.items.map(u => ({ value: u.value, label: u.label }));
 
   // Responsive: Only show on large screens
   return (
     <>
-      <div className="block lg:hidden text-center text-red-700 font-semibold my-8">
-        Admin controls are only available on desktop/laptop screens.
-      </div>
-      <div className="hidden lg:block max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
+      <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow text-black">
         <h1 className="text-3xl font-bold mb-8 text-center">Admin Panel</h1>
+        {/*
         <AdminTable
           title="Domains"
           items={domains.items}
@@ -287,7 +308,7 @@ export default function AdminPanel() {
           onAdd={domains.addItem}
           onDelete={domains.removeItem}
           onEdit={domains.editItem}
-          promptFields={[{ key: 'label', label: 'Label' }, { key: 'value', label: 'Value' }]}
+          promptFields={[{ key: 'label', label: 'Label' }, { key: 'value', label: 'Value' }, { key: 'mobileLabel', label: 'Mobile Label' }]}
         />
         <AdminTable
           title="Units"
@@ -327,21 +348,6 @@ export default function AdminPanel() {
           ]}
         />
         <AdminTable
-          title="Users"
-          items={users.items}
-          loading={users.loading}
-          onAdd={users.addItem}
-          onDelete={users.removeItem}
-          onEdit={users.editItem}
-          promptFields={[
-            { key: 'firstName', label: 'First Name' },
-            { key: 'lastName', label: 'Last Name' },
-            { key: 'email', label: 'Email' },
-            { key: 'gender', label: 'Gender', options: genders.items.map(g => ({ value: g.value, label: g.label })) },
-            { key: 'birthday', label: 'Birthday' },
-          ]}
-        />
-        <AdminTable
           title="Genders"
           items={genders.items}
           loading={genders.loading}
@@ -363,6 +369,22 @@ export default function AdminPanel() {
           promptFields={[
             { key: 'lowerBound', label: 'Lower Bound' },
             { key: 'upperBound', label: 'Upper Bound' },
+          ]}
+        />
+        */}
+        <AdminTable
+          title="Users"
+          items={users.items}
+          loading={users.loading}
+          onAdd={users.addItem}
+          onDelete={users.removeItem}
+          onEdit={users.editItem}
+          promptFields={[
+            { key: 'firstName', label: 'First Name' },
+            { key: 'lastName', label: 'Last Name' },
+            { key: 'email', label: 'Email' },
+            { key: 'gender', label: 'Gender', options: genders.items.map(g => ({ value: g.value, label: g.label })) },
+            { key: 'birthday', label: 'Birthday' },
           ]}
         />
       </div>

@@ -3,7 +3,7 @@ import { useUser } from '../model/auth/UserContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function ScalarPage() {
+export default function CoachingPage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
@@ -29,8 +29,8 @@ export default function ScalarPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <div className="bg-white rounded-lg shadow p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Scalar</h1>
-        <p className="text-gray-600 mb-4">Your personalized performance analytics will appear here.</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Coaching</h1>
+        <p className="text-gray-600 mb-4">Your personalized coaching experience will be available here soon.</p>
         <div className="text-sm text-gray-500">
           Welcome, {user.firstName || user.email}!
         </div>

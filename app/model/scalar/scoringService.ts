@@ -1,0 +1,283 @@
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { COHORTS, AGE_GROUPS, Cohort, CohortKey, BENCHMARKS, EVENTS, DOMAINS, Submission } from '../types';
+import { DataService } from '../data/access/service';
+
+/**
+ * GENERIC DOMAIN SCORING ALGORITHM
+ * 
+ * This module implements normalized scoring for all fitness domains using benchmarks
+ * and handles both "higher is better" and "lower is better" event types:
+ * 
+ * 1. COHORT MATCHING: Determines user's cohort based on age and gender
+ * 2. BENCHMARK COMPARISON: Compares user's best performance in each domain event 
+ *    to cohort-specific benchmarks
+ * 3. SCORE CALCULATION: Uses a 0-100 linear scale where:
+ *    - 0: At foundational performance level
+ *    - 100: At elite performance level
+ *    - Linear interpolation between foundational and elite performance levels
+ * 4. DOMAIN SCORE: Averages scores across all completed events in the domain
+ * 
+ * EVENT TYPES:
+ * - "Higher is better" (weight, repetitions, energy): More is better
+ * - "Lower is better" (time): Less is better (faster times)
+ * 
+ * Example: A 25-year-old male who deadlifts 400 lbs:
+ * - Cohort: male_18_29 (Foundational: 173 lb, Elite: 552 lb)
+ * - Score: ((400-173)/(552-173)) * 100 = 59.9/100
+ */
+
+// Utility: Determine if an event is "higher is better" or "lower is better"
+function isHigherBetter(unitType: string): boolean {
+  // "Lower is better" for time events (faster times are better)
+  if (unitType === 'time') {
+    return false;
+  }
+  
+  // "Higher is better" for weight, repetitions, energy events
+  // (more weight lifted, more reps, more calories burned are better)
+  return true;
+}
+
+// Utility: Get user's cohort based on birthday and gender
+export function getUserCohort(user: { birthday?: string; gender?: { value: string } }): Cohort | undefined {
+  // console.log('🔍 Debug getUserCohort: Input user:', user);
+  // console.log('🔍 Debug getUserCohort: User birthday:', user.birthday);
+  // console.log('🔍 Debug getUserCohort: User gender:', user.gender);
+  
+  if (!user.birthday || !user.gender?.value) {
+    console.log('🔍 Debug getUserCohort: Missing birthday or gender, returning undefined');
+    return undefined;
+  }
+  
+  const birthYear = Number(user.birthday.split('-')[0]);
+  const birthMonth = Number(user.birthday.split('-')[1] || '1');
+  const birthDay = Number(user.birthday.split('-')[2] || '1');
+  // console.log('🔍 Debug getUserCohort: Parsed birth date:', { birthYear, birthMonth, birthDay });
+  
+  const today = new Date();
+  let age = today.getFullYear() - birthYear;
+  // Adjust if birthday hasn't occurred yet this year
+  if (
+    today.getMonth() + 1 < birthMonth ||
+    (today.getMonth() + 1 === birthMonth && today.getDate() < birthDay)
+  ) {
+    age--;
+  }
+  // console.log('🔍 Debug getUserCohort: Calculated age:', age);
+  
+  const ageGroup = AGE_GROUPS.find(g => age >= g.lowerBound && age <= g.upperBound);
+  // console.log('🔍 Debug getUserCohort: Found age group:', ageGroup);
+  // console.log('🔍 Debug getUserCohort: Available age groups:', AGE_GROUPS);
+  
+  if (!ageGroup) {
+    console.log('🔍 Debug getUserCohort: No age group found, returning undefined');
+    return undefined;
+  }
+  
+  // console.log('🔍 Debug getUserCohort: Looking for cohort with gender:', user.gender?.value);
+  // console.log('🔍 Debug getUserCohort: And age bounds:', ageGroup.lowerBound, '-', ageGroup.upperBound);
+  // console.log('🔍 Debug getUserCohort: Available cohorts:', COHORTS);
+  
+  const cohort = COHORTS.find(c => c.gender.value === user.gender?.value && c.age.lowerBound === ageGroup.lowerBound && c.age.upperBound === ageGroup.upperBound);
+  // console.log('🔍 Debug getUserCohort: Found cohort:', cohort);
+  
+  return cohort;
+}
+
+// Calculate the normalized score for a user and a domain
+export async function getNormalizedDomainScore(userId: string, domainValue: string): Promise<number> {
+  try {
+    console.log(`🔍 [ScoreService] Starting score calculation for userId: ${userId}, domain: ${domainValue}`);
+    
+    // Get user submissions
+    const submissions = await DataService.getSubmissionsByUserId(userId);
+    console.log(`🔍 [ScoreService] Total submissions retrieved: ${submissions.length}`);
+    console.log(`🔍 [ScoreService] All submissions:`, submissions.map(s => ({
+      eventValue: s.event.value,
+      eventDomain: s.event.domain.value,
+      rawValue: s.rawValue,
+      value: s.value,
+      unit: s.unit?.value || 'time'
+    })));
+    
+    // Filter submissions for this domain
+    const domainSubmissions = submissions.filter(s => s.event.domain.value === domainValue);
+    console.log(`🔍 [ScoreService] Domain submissions for ${domainValue}: ${domainSubmissions.length}`);
+    console.log(`🔍 [ScoreService] Domain submissions details:`, domainSubmissions.map(s => ({
+      eventValue: s.event.value,
+      eventLabel: s.event.label,
+      rawValue: s.rawValue,
+      value: s.value,
+      unit: s.unit?.value || 'time',
+      unitType: s.event.unitType.value
+    })));
+    
+    if (domainSubmissions.length === 0) {
+      console.log(`🔍 [ScoreService] No submissions found for domain: ${domainValue}`);
+      return 0; // No submissions for this domain
+    }
+    
+    // Get user information to determine cohort
+    const userSubmission = domainSubmissions[0]; // Get user from first submission
+    const user = userSubmission.user;
+    console.log(`🔍 [ScoreService] User from submission:`, {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      gender: user.gender,
+      birthday: user.birthday
+    });
+    
+    const cohort = getUserCohort(user);
+    
+    if (!cohort) {
+      console.warn('Could not determine user cohort, returning 0');
+      return 0;
+    }
+    
+    // Calculate domain score using generic algorithm
+    return calculateDomainScore(domainSubmissions, cohort, domainValue);
+  } catch (error) {
+    console.error('Error calculating normalized domain score:', error);
+    return 0;
+  }
+}
+
+// Calculate domain score using generic algorithm for any domain
+function calculateDomainScore(submissions: Submission[], cohort: Cohort, domainValue: string): number {
+  // Get all unique events in this domain from submissions
+  const uniqueEvents = Array.from(new Set(submissions.map(s => s.event.value)));
+  const eventScores: { event: string, score: number }[] = [];
+  
+  console.log(`🏃 Calculating ${domainValue} domain score for cohort:`, cohort.key);
+  console.log(`🏃 Total domain submissions:`, submissions.length);
+  console.log(`🏃 Unique events in domain: [${uniqueEvents.join(', ')}]`);
+  console.log(`🏃 Will find best performance for each event and average their normalized scores`);
+  
+  for (const eventValue of uniqueEvents) {
+    // Get user's submissions for this event
+    const eventSubmissions = submissions.filter(s => s.event.value === eventValue);
+    
+    if (eventSubmissions.length === 0) {
+      continue; // Skip events with no submissions
+    }
+    
+    // Get the event info to determine scoring direction
+    const eventInfo = eventSubmissions[0].event;
+    const higherIsBetter = isHigherBetter(eventInfo.unitType.value);
+    
+    // Find the best performance based on scoring direction
+    console.log(`🏃 All ${eventValue} submissions:`, eventSubmissions.map(s => ({
+      rawValue: s.rawValue,
+      value: s.value,
+      unit: s.unit?.value || 'time',
+      createdAt: s.createdAt
+    })));
+    
+    const bestSubmission = eventSubmissions.reduce((best, current) => {
+      console.log(`🏃 Comparing ${eventValue} submissions - Current: ${current.value}, Best: ${best.value}`);
+      if (higherIsBetter) {
+        return current.value > best.value ? current : best;
+      } else {
+        return current.value < best.value ? current : best;
+      }
+    });
+    
+    console.log(`🏃 Best ${eventValue} performance:`, {
+      rawValue: bestSubmission.rawValue,
+      value: bestSubmission.value,
+      unit: bestSubmission.unit?.value || 'time',
+      higherIsBetter
+    });
+    
+    // Get benchmarks for this event and cohort
+    const eventBenchmarks = BENCHMARKS[eventValue as keyof typeof BENCHMARKS];
+    if (!eventBenchmarks) {
+      console.warn(`🏃 No benchmarks found for event: ${eventValue}`);
+      continue; // Skip if no benchmarks available
+    }
+    
+    const cohortBenchmarks = eventBenchmarks[cohort.key as keyof typeof eventBenchmarks];
+    if (!cohortBenchmarks) {
+      console.warn(`🏃 No cohort benchmarks found for ${eventValue} and cohort ${cohort.key}`);
+      continue; // Skip if no cohort benchmarks available
+    }
+    
+    console.log(`🏃 ${eventValue} benchmarks - Foundational: ${cohortBenchmarks.foundational}, Elite: ${cohortBenchmarks.elite}`);
+    console.log(`🏃 ${eventValue} scoring direction: ${higherIsBetter ? 'higher is better' : 'lower is better'}`);
+    
+    // Calculate normalized score (0-100 scale)
+    const score = calculateEventScore(bestSubmission.value, cohortBenchmarks.foundational, cohortBenchmarks.elite, higherIsBetter);
+    console.log(`🏃 ${eventValue} normalized score calculation:`);
+    console.log(`🏃   User performance: ${bestSubmission.value}${bestSubmission.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Foundational benchmark: ${cohortBenchmarks.foundational}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Elite benchmark: ${cohortBenchmarks.elite}${cohortBenchmarks.unit?.value === 'seconds' ? 's' : ''}`);
+    console.log(`🏃   Final score: ${score}/100`);
+    eventScores.push({ event: eventValue, score });
+  }
+  
+  // Calculate average score across all events in the domain
+  if (eventScores.length === 0) {
+    console.log(`🏃 No valid event scores found for ${domainValue} domain`);
+    return 0;
+  }
+  
+  console.log(`🏃 Event scores for ${domainValue} domain:`);
+  eventScores.forEach(({ event, score }) => {
+    console.log(`🏃   ${event}: ${score}/100`);
+  });
+  
+  const totalScore = eventScores.reduce((sum, { score }) => sum + score, 0);
+  const finalScore = Math.round(totalScore / eventScores.length);
+  
+  console.log(`🏃 Domain score calculation: (${eventScores.map(e => e.score).join(' + ')}) / ${eventScores.length} = ${finalScore}/100`);
+  console.log(`🏃 Final ${domainValue} domain score: ${finalScore}/100`);
+  
+  // Return average score if we have any event scores, otherwise 0
+  return finalScore;
+}
+
+// Calculate individual event score using linear normalization (0-100 scale)
+function calculateEventScore(userPerformance: number, foundationalBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
+  return normalizeScore(userPerformance, foundationalBenchmark, eliteBenchmark, higherIsBetter ? "higher" : "lower");
+}
+
+// Linear normalization function for 0-100 scale
+function normalizeScore(value: number, foundationalBenchmark: number, eliteBenchmark: number, direction: "higher" | "lower"): number {
+  // Safeguard against division by zero
+  if (eliteBenchmark === foundationalBenchmark) return 100;
+
+  let score: number;
+  if (direction === "higher") {
+    // For "higher is better" events (weight, reps, calories)
+    // foundationalBenchmark is the lower value, eliteBenchmark is the higher value
+    score = ((value - foundationalBenchmark) / (eliteBenchmark - foundationalBenchmark)) * 100;
+  } else {
+    // For "lower is better" events (time)
+    // foundationalBenchmark is the higher (slower) time, eliteBenchmark is the lower (faster) time
+    score = ((foundationalBenchmark - value) / (foundationalBenchmark - eliteBenchmark)) * 100;
+  }
+
+  // Clamp result to [0, 100] range
+  return Math.max(0, Math.min(100, score));
+}
+
+// Fetch normalized scores for each domain for a user
+export async function getUserDomainScores(userId: string, domainValues: string[]): Promise<{ [domainValue: string]: number }> {
+  const scores: { [domainValue: string]: number } = {};
+  for (const domainValue of domainValues) {
+    scores[domainValue] = await getNormalizedDomainScore(userId, domainValue);
+  }
+  return scores;
+}
+
+// Helper function to get any domain score for a specific user (for testing/debugging)
+export async function getUserDomainScore(userId: string, domainValue: string): Promise<number> {
+  return await getNormalizedDomainScore(userId, domainValue);
+}
+
+// Helper function to calculate event score (exported for testing)
+export function calculateNormalizedEventScore(userPerformance: number, foundationalBenchmark: number, eliteBenchmark: number, higherIsBetter: boolean = true): number {
+  return calculateEventScore(userPerformance, foundationalBenchmark, eliteBenchmark, higherIsBetter);
+} 

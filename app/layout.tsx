@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import BottomNav from "./BottomNav";
 import { UserProvider } from "./model/auth/UserContext";
+import ConditionalNav from "./ConditionalNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,11 +28,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
-        {/* Top nav removed for bottom nav prep */}
         <UserProvider>
-          {children}
+          <div className="pt-14">
+            {children}
+          </div>
         </UserProvider>
-        <BottomNav />
+        <ConditionalNav />
       </body>
     </html>
   );

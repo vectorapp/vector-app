@@ -15,6 +15,18 @@ import { db } from './firebase';
 import type { UserDao } from './dao';
 import type { User, Gender, Domain, UnitType, Unit, AgeGroup, Event, Submission } from '../../types';
 import type { UserDto, GenderDto, DomainDto, UnitTypeDto, UnitDto, AgeGroupDto, EventDto, SubmissionDto } from '../transfer/dtos';
+import { GENDERS, DOMAINS } from '../../types';
+
+// Type guard for gender object
+function isGenderObject(g: any): g is { value: string } {
+  return typeof g === 'object' && g !== null && 'value' in g;
+}
+
+// Helper to get domain logo from DOMAINS constant
+function getDomainLogo(domainValue: string): string {
+  const domain = DOMAINS.find(d => d.value === domainValue);
+  return domain?.logo || 'GiCog'; // Default fallback logo
+}
 
 // Base Firestore DAO implementation
 abstract class BaseFirestoreDao<T, TDto> {
@@ -106,29 +118,16 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
   }
 
   protected async dtoToEntity(dto: UserDto): Promise<User> {
-    // Fetch the gender object
+    // Hydrate the gender object from local constants
     let gender = undefined;
-    
     if (dto.gender) {
-      // Find gender document by matching the value field
-      const gendersSnapshot = await getDocs(collection(db, 'genders'));
-      const genderDoc = gendersSnapshot.docs.find(doc => {
-        const data = doc.data() as GenderDto;
-        return data.value === dto.gender;
-      });
-      
-      if (genderDoc) {
-        const genderData = genderDoc.data() as GenderDto;
-        
-        if (genderData && genderData.value && genderData.label) {
-          gender = {
-            value: genderData.value,
-            label: genderData.label
-          };
-        }
+      if (typeof dto.gender === 'string') {
+        gender = GENDERS.find(g => g.value === dto.gender);
+      } else if (typeof dto.gender === 'object' && dto.gender !== null && 'value' in dto.gender) {
+        // Safe to access value property since we've verified it exists
+        gender = GENDERS.find(g => g.value === (dto.gender as any).value) || dto.gender;
       }
     }
-
     const result = {
       id: dto.id,
       createdAt: dto.createdAt,
@@ -138,7 +137,6 @@ export class FirestoreUserDao extends BaseFirestoreDao<User, UserDto> implements
       gender,
       birthday: dto.birthday || ''
     };
-    
     return result;
   }
 
@@ -259,7 +257,8 @@ export class FirestoreDomainDao {
   async create(domain: Omit<Domain, 'id'>): Promise<Domain> {
     const domainDto: Omit<DomainDto, 'id' | 'createdAt'> = {
       label: domain.label,
-      value: domain.value
+      value: domain.value,
+      mobileLabel: domain.mobileLabel || '',
     };
 
     const docRef = await addDoc(collection(db, this.collectionName), {
@@ -270,7 +269,9 @@ export class FirestoreDomainDao {
     return {
       id: docRef.id,
       label: domain.label,
-      value: domain.value
+      value: domain.value,
+      mobileLabel: domain.mobileLabel || '',
+      logo: getDomainLogo(domain.value),
     };
   }
 
@@ -287,7 +288,9 @@ export class FirestoreDomainDao {
     return {
       id: docSnap.id,
       label: data.label || '',
-      value: data.value || ''
+      value: data.value || '',
+      mobileLabel: data.mobileLabel || '',
+      logo: getDomainLogo(data.value || ''),
     };
   }
 
@@ -309,7 +312,9 @@ export class FirestoreDomainDao {
     return {
       id: doc.id,
       label: data.label || '',
-      value: data.value || ''
+      value: data.value || '',
+      mobileLabel: data.mobileLabel || '',
+      logo: getDomainLogo(data.value || ''),
     };
   }
 
@@ -323,7 +328,9 @@ export class FirestoreDomainDao {
       domains.push({
         id: doc.id,
         label: data.label || '',
-        value: data.value || ''
+        value: data.value || '',
+        mobileLabel: data.mobileLabel || '',
+        logo: getDomainLogo(data.value || ''),
       });
     });
 
@@ -336,6 +343,7 @@ export class FirestoreDomainDao {
     
     if (domain.label !== undefined) updateData.label = domain.label;
     if (domain.value !== undefined) updateData.value = domain.value;
+    if (domain.mobileLabel !== undefined) updateData.mobileLabel = domain.mobileLabel;
 
     await updateDoc(docRef, updateData);
 
@@ -821,6 +829,7 @@ export class FirestoreSubmissionDao {
       userId: submission.user.id || submission.user.email,
       event: submission.event.value,
       rawValue: submission.rawValue,
+      value: submission.value, // Save the computed numeric value
       unit: submission.unit ? submission.unit.value : null
     };
 
@@ -856,7 +865,7 @@ export class FirestoreSubmissionDao {
       user: data.userId || '',
       event: data.event || '',
       rawValue: data.rawValue || '',
-      value: 0, // Will be computed by DataService
+      value: data.value || 0, // Use stored value from Firestore
       unit: data.unit || null,
       createdAt: data.createdAt
     } as unknown as Submission;
@@ -879,7 +888,7 @@ export class FirestoreSubmissionDao {
         user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        value: 0, // Will be computed by DataService
+        value: data.value || 0, // Use stored value from Firestore
         unit: data.unit || null,
         createdAt: data.createdAt
       } as unknown as Submission);
@@ -905,7 +914,7 @@ export class FirestoreSubmissionDao {
         user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        value: 0, // Will be computed by DataService
+        value: data.value || 0, // Use stored value from Firestore
         unit: data.unit || null,
         createdAt: data.createdAt
       } as unknown as Submission);
@@ -926,7 +935,7 @@ export class FirestoreSubmissionDao {
         user: data.userId || '',
         event: data.event || '',
         rawValue: data.rawValue || '',
-        value: 0, // Will be computed by DataService
+        value: data.value || 0, // Use stored value from Firestore
         unit: data.unit || null,
         createdAt: data.createdAt
       } as unknown as Submission);
@@ -946,6 +955,7 @@ export class FirestoreSubmissionDao {
       updateData.event = typeof submission.event === 'string' ? submission.event : submission.event.value;
     }
     if (submission.rawValue !== undefined) updateData.rawValue = submission.rawValue;
+    if (submission.value !== undefined) updateData.value = submission.value; // Update the computed numeric value
     if (submission.unit !== undefined) {
       updateData.unit = submission.unit ? (typeof submission.unit === 'string' ? submission.unit : submission.unit.value) : null;
     }
